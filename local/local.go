@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -34,15 +35,61 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	logger.Debug(plexCxn.GetMachineID())
+	setupNotifications(plexCxn)
 
-	logger.Info(plexCxn.GetMachineID())
-	//webhooks := plex.NewWebhook()
-	//println(webhooks)
-	//events := plex.NewNotificationEvents()
-	//println(events)
-
-	// lol all of this is meaningless after remote access with VPN is fixed
+	// lol all of this is meaningless after VPN split tunneling is working
 	setupRouter().Run("localhost:42069")
+}
+
+func setupNotifications(cxn *plex.Plex) {
+	ctrlC := make(chan os.Signal, 1)
+	onError := func(err error) {
+		logger.Errorf("error from event: %v", err)
+	}
+
+	events := plex.NewNotificationEvents()
+	events.OnPlaying(func(n plex.NotificationContainer) {
+		mediaID := n.PlaySessionStateNotification[0].RatingKey
+		sessionID := n.PlaySessionStateNotification[0].SessionKey
+
+		sessions, err := cxn.GetSessions()
+		if err != nil {
+			logger.Errorf("failed to fetch sessions on plex server: %v", err)
+			return
+		}
+
+		var userID, username, title string
+		for _, meta := range sessions.MediaContainer.Metadata {
+			if sessionID != meta.SessionKey {
+				continue
+			}
+			userID = meta.User.ID
+			username = meta.User.Title
+			break
+		}
+
+		metadata, err := cxn.GetMetadata(mediaID)
+		if err != nil {
+			logger.Warnf("failed to get metadata for key %s: %v\n", mediaID, err)
+		} else {
+			title = metadata.MediaContainer.Metadata[0].Title
+		}
+		logger.Infof("user (id: %s) has started playing %s (id: %s) %s", username, userID,
+			title, mediaID)
+	})
+	cxn.SubscribeToNotifications(events, ctrlC, onError)
+}
+
+func setupWebhooks() *plex.WebhookEvents {
+	webhooks := plex.NewWebhook()
+	webhooks.OnPlay(func(w plex.Webhook) {
+		logger.Debugw("account %v is playing %v", w.Account.Title, w.Metadata.Title)
+	})
+	webhooks.OnResume(func(w plex.Webhook) {
+		logger.Debugw("account %v resumed %v", w.Account.Title, w.Metadata.Title)
+	})
+	return webhooks
 }
 
 func setupRouter() *gin.Engine {
@@ -91,7 +138,7 @@ func enableVpn(c *gin.Context) {
 	restartCmd := exec.Command("qbittorrent")
 	restartCmd.Dir = "E:/Program Files/qBittorrent/"
 	err = restartCmd.Start()
-	logOutput("starting client", out, err)
+	logOutput("starting client", nil, err)
 
 	// resume all torrents
 	out, err = exec.Command("qbt", "torrent", "resume", "ALL").Output()

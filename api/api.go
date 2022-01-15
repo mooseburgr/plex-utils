@@ -3,6 +3,7 @@ package api
 import (
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/jrudio/go-plex-client"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
@@ -16,17 +17,21 @@ func initPlexCxn() (*plex.Plex, error) {
 }
 
 func SendInvite(w http.ResponseWriter, r *http.Request) {
+	var body requestBody
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	email := r.URL.Query().Get("email")
 	plexCxn, err := initPlexCxn()
 	if err != nil {
-		log.Print(err)
 		http.Error(w, "ruh roh, can't connect to plex: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	err = plexCxn.InviteFriend(plex.InviteFriendParams{
-		UsernameOrEmail: email,
+		UsernameOrEmail: body.email,
 		MachineID:       "d92d03d0c5f98de89a3b7699d744949bd9e78424",
 	})
 
