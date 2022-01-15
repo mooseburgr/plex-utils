@@ -3,9 +3,12 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jrudio/go-plex-client"
+	"github.com/mooseburgr/plex-utils/api"
 	"go.uber.org/zap"
+	"io"
 	"net/http"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -27,7 +30,7 @@ func init() {
 func main() {
 	defer zapLogger.Sync()
 
-	plexCxn, err := plex.New("http://127.0.01:32400", "TODO-get-me")
+	plexCxn, err := plex.New("http://127.0.01:32400", api.GetPlexToken())
 	if err != nil {
 		panic(err)
 	}
@@ -48,12 +51,10 @@ func setupRouter() *gin.Engine {
 	router.Use(logRequest)
 	router.LoadHTMLGlob("templates/*.tmpl")
 
-	router.GET("/cookie", func(c *gin.Context) {
-		c.SetCookie("gin_cookie", c.ClientIP(), 3600, "/", "localhost", false, true)
-	})
+	router.GET("/favicon.ico", getFavicon)
 	router.GET("/admin", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "admin.tmpl", gin.H{
-			"key": "value",
+			"vpnEnabled": isVpnEnabled(),
 		})
 	})
 	router.POST("/vpn/disable.do", disableVpn)
@@ -66,8 +67,8 @@ func disableVpn(c *gin.Context) {
 	out, err := exec.Command("qbt", "torrent", "pause", "ALL").Output()
 	logOutput("pausing torrents", out, err)
 
-	// idk, wait a few secs for cxns to close??
-	time.Sleep(3 * time.Second)
+	// lol idk, wait a few secs for cxns to close??
+	time.Sleep(2 * time.Second)
 
 	// disconnect VPN
 	out, err = exec.Command("nordvpn", "-d").Output()
@@ -84,7 +85,7 @@ func enableVpn(c *gin.Context) {
 	logOutput("killing client", out, err)
 
 	// give VPN some time to connect
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	// restart torrent client
 	restartCmd := exec.Command("qbittorrent")
@@ -109,4 +110,30 @@ func logOutput(msg string, out []byte, err error) {
 	logger.Infow(msg,
 		"out", string(out),
 		"err", err)
+}
+
+func isVpnEnabled() bool {
+	// TODO fix this crap
+	resp, err := http.Get("https://ipapi.co/org/")
+	if err != nil {
+		logger.Warnf("error from IP API: %v", err)
+	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Warnf("failed to read IP API response: %v", err)
+	}
+	return !strings.Contains(string(b), "CENTURYLINK")
+}
+
+func getFavicon(c *gin.Context) {
+	resp, _ := http.Get("https://s.gravatar.com/avatar/0dcd9557e311bb567da7dad218069b76")
+	reader := resp.Body
+	defer reader.Close()
+	contentLength := resp.ContentLength
+	contentType := resp.Header.Get("Content-Type")
+	extraHeaders := map[string]string{
+		"Content-Disposition": `attachment; filename="favicon.png"`,
+	}
+	c.DataFromReader(http.StatusOK, contentLength, contentType, reader, extraHeaders)
 }
