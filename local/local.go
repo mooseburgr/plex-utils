@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-co-op/gocron"
 	"github.com/jrudio/go-plex-client"
 	"github.com/mooseburgr/plex-utils/api"
 	"go.uber.org/zap"
@@ -31,18 +32,29 @@ func init() {
 func main() {
 	defer zapLogger.Sync()
 
-	plexCxn, err := plex.New("http://127.0.01:32400", api.GetPlexToken())
+	plexCxn, err := plex.New("http://127.0.0.1:32400", api.GetPlexToken())
 	if err != nil {
 		panic(err)
 	}
-	logger.Debug(plexCxn.GetMachineID())
+
 	setupNotifications(plexCxn)
 
-	// lol all of this is meaningless after VPN split tunneling is working
+	setupScheduledTasks()
+
+	// lol all of this is meaningless after VPN split tunneling  is working
 	setupRouter().Run("localhost:42069")
 }
 
+func setupScheduledTasks() {
+	scheduler := gocron.NewScheduler(time.Local)
+	// reconnect after router reboots
+	scheduler.Every(1).Days().At("04:30").Do(enableVpn)
+	// disable
+	scheduler.Every(1).Days().At("07:30").Do(disableVpn)
+}
+
 func setupNotifications(cxn *plex.Plex) {
+	logger.Debug(plexCxn.GetMachineID())
 	ctrlC := make(chan os.Signal, 1)
 	onError := func(err error) {
 		logger.Errorf("error from event: %v", err)
@@ -50,6 +62,7 @@ func setupNotifications(cxn *plex.Plex) {
 
 	events := plex.NewNotificationEvents()
 	events.OnPlaying(func(n plex.NotificationContainer) {
+		disableVpn(nil)
 		mediaID := n.PlaySessionStateNotification[0].RatingKey
 		sessionID := n.PlaySessionStateNotification[0].SessionKey
 
@@ -75,7 +88,7 @@ func setupNotifications(cxn *plex.Plex) {
 		} else {
 			title = metadata.MediaContainer.Metadata[0].Title
 		}
-		logger.Infof("user (id: %s) has started playing %s (id: %s) %s", username, userID,
+		logger.Infof("user %s (id: %s) has started playing %s (id: %s)", username, userID,
 			title, mediaID)
 	})
 	cxn.SubscribeToNotifications(events, ctrlC, onError)
