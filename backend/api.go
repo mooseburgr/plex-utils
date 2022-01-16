@@ -1,4 +1,4 @@
-package backend
+package api
 
 import (
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"

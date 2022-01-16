@@ -1,16 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/go-co-op/gocron"
 	"github.com/jrudio/go-plex-client"
+	api "github.com/mooseburgr/plex-utils"
 
 	"go.uber.org/zap"
-	"io"
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 )
 
@@ -32,12 +32,12 @@ func init() {
 func main() {
 	defer zapLogger.Sync()
 
-	plexCxn, err := plex.New("http://127.0.0.1:32400", backend.GetPlexToken())
+	plexCxn, err := plex.New("http://127.0.0.1:32400", api.GetPlexToken())
 	if err != nil {
 		panic(err)
 	}
-
-	setupNotifications(plexCxn)
+	logger.Debug(plexCxn.GetMachineID())
+	//setupNotifications(plexCxn)
 
 	setupScheduledTasks()
 
@@ -54,7 +54,6 @@ func setupScheduledTasks() {
 }
 
 func setupNotifications(cxn *plex.Plex) {
-	logger.Debug(cxn.GetMachineID())
 	ctrlC := make(chan os.Signal, 1)
 	onError := func(err error) {
 		logger.Errorf("error from event: %v", err)
@@ -173,18 +172,18 @@ func logOutput(msg string, out []byte, err error) {
 }
 
 func isVpnEnabled() bool {
-	// TODO fix this crap
-	// http://api.ipstack.com/check?access_key=dba9b8dc10f06971ee169e857c374d07
-	resp, err := http.Get("https://ipapi.co/org/")
+	var response IpResponse
+	// here's my free key, wgaf
+	resp, err := http.Get("http://api.ipstack.com/check?access_key=dba9b8dc10f06971ee169e857c374d07")
 	if err != nil {
 		logger.Warnf("error from IP API: %v", err)
 	}
-	defer resp.Body.Close()
-	b, err := io.ReadAll(resp.Body)
+	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
-		logger.Warnf("failed to read IP API response: %v", err)
+		logger.Warnf("error decoding: %v", err)
 	}
-	return !strings.Contains(string(b), "CENTURYLINK")
+	logger.Infof("ip response: %v", response)
+	return response.RegionName != "Minnesota"
 }
 
 func getFavicon(c *gin.Context) {
@@ -195,6 +194,36 @@ func getFavicon(c *gin.Context) {
 	contentType := resp.Header.Get("Content-Type")
 	extraHeaders := map[string]string{
 		"Content-Disposition": `attachment; filename="favicon.png"`,
+		"Cache-Control":       "max-age=31536000",
 	}
 	c.DataFromReader(http.StatusOK, contentLength, contentType, reader, extraHeaders)
+}
+
+type IpResponse struct {
+	Ip            string  `json:"ip"`
+	Type          string  `json:"type"`
+	ContinentCode string  `json:"continent_code"`
+	ContinentName string  `json:"continent_name"`
+	CountryCode   string  `json:"country_code"`
+	CountryName   string  `json:"country_name"`
+	RegionCode    string  `json:"region_code"`
+	RegionName    string  `json:"region_name"`
+	City          string  `json:"city"`
+	Zip           string  `json:"zip"`
+	Latitude      float64 `json:"latitude"`
+	Longitude     float64 `json:"longitude"`
+	Location      struct {
+		GeonameId int    `json:"geoname_id"`
+		Capital   string `json:"capital"`
+		Languages []struct {
+			Code   string `json:"code"`
+			Name   string `json:"name"`
+			Native string `json:"native"`
+		} `json:"languages"`
+		CountryFlag             string `json:"country_flag"`
+		CountryFlagEmoji        string `json:"country_flag_emoji"`
+		CountryFlagEmojiUnicode string `json:"country_flag_emoji_unicode"`
+		CallingCode             string `json:"calling_code"`
+		IsEu                    bool   `json:"is_eu"`
+	} `json:"location"`
 }
