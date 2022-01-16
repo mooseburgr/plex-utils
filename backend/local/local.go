@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-co-op/gocron"
 	"github.com/jrudio/go-plex-client"
-	"github.com/mooseburgr/plex-utils/api"
+
 	"go.uber.org/zap"
 	"io"
 	"net/http"
@@ -32,7 +32,7 @@ func init() {
 func main() {
 	defer zapLogger.Sync()
 
-	plexCxn, err := plex.New("http://127.0.0.1:32400", api.GetPlexToken())
+	plexCxn, err := plex.New("http://127.0.0.1:32400", backend.GetPlexToken())
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +54,7 @@ func setupScheduledTasks() {
 }
 
 func setupNotifications(cxn *plex.Plex) {
-	logger.Debug(plexCxn.GetMachineID())
+	logger.Debug(cxn.GetMachineID())
 	ctrlC := make(chan os.Signal, 1)
 	onError := func(err error) {
 		logger.Errorf("error from event: %v", err)
@@ -174,6 +174,7 @@ func logOutput(msg string, out []byte, err error) {
 
 func isVpnEnabled() bool {
 	// TODO fix this crap
+	// http://api.ipstack.com/check?access_key=dba9b8dc10f06971ee169e857c374d07
 	resp, err := http.Get("https://ipapi.co/org/")
 	if err != nil {
 		logger.Warnf("error from IP API: %v", err)

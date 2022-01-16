@@ -5,6 +5,7 @@ go 1.17
 require (
 	cloud.google.com/go/secretmanager v1.0.0
 	github.com/gin-gonic/gin v1.7.7
+	github.com/go-co-op/gocron v1.11.0
 	github.com/jrudio/go-plex-client v0.0.0-20220106065909-9e1d590b99aa
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.20.0
@@ -17,7 +18,6 @@ require (
 	cloud.google.com/go/iam v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/go-co-op/gocron v1.11.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.10.0 // indirect
