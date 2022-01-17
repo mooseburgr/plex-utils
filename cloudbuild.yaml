@@ -4,8 +4,19 @@ steps:
 - name: golang
   args: ['go', 'test']
   dir: 'backend'
-- name: 'gcr.io/cloud-builders/gcloud'
-  args: ['functions', 'deploy', 'send-invite', '--trigger-http', '--runtime', 'go116', '--entry-point', 'SendInvite']
-  dir: 'backend'
+# - name: 'gcr.io/cloud-builders/gcloud'
+#   args: ['functions', 'deploy', 'send-invite', '--trigger-http', '--runtime', 'go116', '--entry-point', 'SendInvite']
+#   dir: 'backend'
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  args:
+  - gcloud
+  - functions
+  - deploy
+  - send-invite
+  - --region=us-central1
+  - --source=.\backend
+  - --trigger-http
+  - --runtime=go116
+  - --entry-point=SendInvite
 options:
   logging: CLOUD_LOGGING_ONLY
