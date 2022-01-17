@@ -2,10 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/jrudio/go-plex-client"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func initPlexCxn() (*plex.Plex, error) {
@@ -13,12 +15,13 @@ func initPlexCxn() (*plex.Plex, error) {
 }
 
 func SendInvite(w http.ResponseWriter, r *http.Request) {
-	var body requestBody
+	var body RequestBody
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	log.Printf("parsed body: %v", body)
 
 	plexCxn, err := initPlexCxn()
 	if err != nil {
@@ -27,18 +30,23 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = plexCxn.InviteFriend(plex.InviteFriendParams{
-		UsernameOrEmail: body.email,
+		UsernameOrEmail: body.Email,
 		MachineID:       "d92d03d0c5f98de89a3b7699d744949bd9e78424",
 	})
 
 	if err != nil {
-		log.Print(err)
-		http.Error(w, "lol idk something went wrong: "+err.Error(), http.StatusBadRequest)
+		log.Printf("err from plex: %v", err)
+		if strings.HasPrefix(err.Error(), fmt.Sprint(http.StatusUnprocessableEntity)) {
+			// 422 = invite is already pending or user exists
+			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		} else {
+			http.Error(w, "lol idk something went wrong: "+err.Error(), http.StatusBadRequest)
+		}
 	}
 }
 
-type requestBody struct {
-	email string `json:"email"`
+type RequestBody struct {
+	Email string `json:"email"`
 }
 
 func GetPlexToken() string {
