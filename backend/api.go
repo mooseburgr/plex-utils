@@ -1,12 +1,8 @@
 package api
 
 import (
-	secretmanager "cloud.google.com/go/secretmanager/apiv1"
-	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/jrudio/go-plex-client"
-	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 	"log"
 	"net/http"
 	"os"
@@ -46,29 +42,10 @@ type requestBody struct {
 }
 
 func GetPlexToken() string {
-	gcpProjectId := os.Getenv("GCP_PROJECT")
-	if gcpProjectId == "" {
+	if token := os.Getenv("PLEX_TOKEN"); token != "" {
+		return token
+	} else {
 		bytes, _ := os.ReadFile("plex-token")
 		return string(bytes)
-	} else {
-		// Create the client.
-		ctx := context.Background()
-		client, err := secretmanager.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("failed to setup client: %v", err)
-		}
-		defer client.Close()
-
-		// Build the request.
-		accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
-			Name: fmt.Sprintf("projects/%s/secrets/%s/versions/latest", gcpProjectId, "TODO"),
-		}
-
-		// Call the API.
-		result, err := client.AccessSecretVersion(ctx, accessRequest)
-		if err != nil {
-			log.Fatalf("failed to access secret version: %v", err)
-		}
-		return string(result.Payload.Data)
 	}
 }
