@@ -14,7 +14,7 @@ steps:
   - deploy
   - send-invite
   - --region=us-central1
-  - --source=.\backend
+  - --source=backend
   - --trigger-http
   - --runtime=go116
   - --entry-point=SendInvite
