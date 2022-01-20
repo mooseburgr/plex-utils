@@ -1,8 +1,8 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
-import Image from 'next/image'
 import { FormEvent, useState } from 'react'
-import { Alert } from 'react-bootstrap'
+import { Alert, Button, Card } from 'react-bootstrap'
+import SlackIcon from './slack-icon'
 
 const Home: NextPage = () => {
 
@@ -12,11 +12,14 @@ const Home: NextPage = () => {
   }
 
   const [email, setEmail] = useState('')
+  const [isLoading, setLoading] = useState(false);
   const [alertState, setAlertState] = useState<AlertState>({})
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
-    let response = await fetch('/api/404', { // /send-invite
+    setLoading(true)
+
+    await fetch('https://us-central1-plex-utils.cloudfunctions.net/send-invite', {
       method: 'POST',
       body: JSON.stringify({ email: email }),
     })
@@ -34,6 +37,8 @@ const Home: NextPage = () => {
         console.error(err)
         setAlertState({ message: 'oops...something went wrong: ' + err, variant: 'danger' })
       })
+
+    setLoading(false)
   }
 
   function isEmailValid(value: string): boolean {
@@ -41,7 +46,7 @@ const Home: NextPage = () => {
   }
 
   return (
-    <div className="container w-sm-50">
+    <div className="container">
       <Head>
         <title>hello there</title>
         <meta name="description" content="invite yourself to my plex server" />
@@ -52,7 +57,9 @@ const Home: NextPage = () => {
       <main>
         <div className="row justify-content-center">
           <div className="col-12 p-3 text-center">
-            <h1>hello there</h1>
+            <h1 onClick={() => window.open('https://www.youtube.com/watch?v=rEq1Z0bjdwc', '_blank')}>
+              hello there
+            </h1>
             invite yourself to my plex server
           </div>
 
@@ -77,9 +84,12 @@ const Home: NextPage = () => {
                   className='form-control'
                 />
                 <div className="input-group-append">
-                  <button id='button' type='submit'
-                    className='btn btn-primary'
-                    disabled={!isEmailValid(email)}>send invite</button>
+                  <Button
+                    disabled={!isEmailValid(email) || isLoading}
+                    type='submit'
+                  >
+                    {isLoading ? 'loading...' : 'send invite'}
+                  </Button>
                 </div>
               </div>
             </form>
@@ -87,18 +97,30 @@ const Home: NextPage = () => {
 
           <div className='w-100' />
 
+          <div className='col-sm-3 p-3'>
+            <Card>
+              <Card.Body>
+                <Card.Text>
+                  hit up the #plex channel for updates, content requests, or any issues you might have
+                </Card.Text>
+                <Card.Link href="https://join.slack.com/t/bagziga/shared_invite/zt-a2uj179c-hvwdWXLf3g0mT1eNqAG_KQ" target="_blank" rel="noopener noreferrer">
+                  <SlackIcon /> <span className='p-1'>join the slack!</span>
+                </Card.Link>
+              </Card.Body>
+            </Card>
+          </div>
 
-          <div className='col-sm-6 p-3'>
-            <a
-              href="https://join.slack.com/t/bagziga/shared_invite/zt-a2uj179c-hvwdWXLf3g0mT1eNqAG_KQ"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="align-middle"
-            >
-              join the
-              <Image src='/slack.png' alt='Slack logo' height={30} width={73} />
-              and post any issues you might have
-            </a>
+          <div className='col-sm-3 p-3'>
+            <Card>
+              <Card.Body>
+                <Card.Text>
+                  here&apos;s how to tweak the default settings to optimize streaming quality
+                </Card.Text>
+                <Card.Link href="https://www.aaviah.com/plex" target="_blank" rel="noopener noreferrer">
+                  thanks @aaviah!
+                </Card.Link>
+              </Card.Body>
+            </Card>
           </div>
 
         </div>

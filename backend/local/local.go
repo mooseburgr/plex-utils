@@ -2,16 +2,18 @@ package main
 
 import (
 	"encoding/json"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-co-op/gocron"
 	"github.com/jrudio/go-plex-client"
 	api "github.com/mooseburgr/plex-utils"
 
-	"go.uber.org/zap"
 	"net/http"
 	"os"
 	"os/exec"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 const (
@@ -41,7 +43,9 @@ func main() {
 
 	setupScheduledTasks()
 
-	// lol all of this is meaningless after VPN split tunneling  is working
+	// lol all of this is meaningless after VPN split tunneling is working
+	
+	// update: use PIA instead of nord if you want split tunneling to work
 	setupRouter().Run("localhost:42069")
 }
 

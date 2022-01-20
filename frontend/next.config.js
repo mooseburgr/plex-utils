@@ -4,6 +4,7 @@ const nextConfig = {
   images: {
     domains: ['lh3.googleusercontent.com'],
   },
+  assetPrefix: './',
 }
 
 module.exports = nextConfig
