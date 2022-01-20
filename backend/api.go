@@ -15,6 +15,17 @@ func initPlexCxn() (*plex.Plex, error) {
 }
 
 func SendInvite(w http.ResponseWriter, r *http.Request) {
+	// handle OPTIONS request
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Max-Age", "3600")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	var body RequestBody
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
