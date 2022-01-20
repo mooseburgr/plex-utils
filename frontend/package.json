@@ -3,9 +3,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && next export && rimraf ../docs/ && copy -R -Force ./out ../docs/",
+    "build": "next build && next export",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "copyBuild": "rimraf ../docs/ && copy -R -Force ./out ../docs/"
   },
   "dependencies": {
     "bootstrap": "^5.1.3",
