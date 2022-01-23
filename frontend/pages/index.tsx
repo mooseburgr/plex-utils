@@ -52,6 +52,9 @@ const Home: NextPage = () => {
         <meta name="description" content="invite yourself to my plex server" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"></meta>
         <link rel="icon" href="https://avatars.slack-edge.com/2022-01-11/2950060844657_4cae9e95e482718f4ef6_88.jpg" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+          rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossOrigin="anonymous" />
+        {/* <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" /> */}
       </Head>
 
       <main>
@@ -104,7 +107,7 @@ const Home: NextPage = () => {
                   hit up the #plex channel for updates, content requests, or any issues you might have
                 </Card.Text>
                 <Card.Link href="https://join.slack.com/t/bagziga/shared_invite/zt-a2uj179c-hvwdWXLf3g0mT1eNqAG_KQ" target="_blank" rel="noopener noreferrer">
-                  <SlackIcon /> <span className='p-1'>join the slack!</span>
+                  <SlackIcon /> <span className='p-1'>join the slack</span>
                 </Card.Link>
               </Card.Body>
             </Card>
@@ -117,7 +120,7 @@ const Home: NextPage = () => {
                   here&apos;s how to tweak the default settings to optimize streaming quality
                 </Card.Text>
                 <Card.Link href="https://www.aaviah.com/plex" target="_blank" rel="noopener noreferrer">
-                  thanks @aaviah!
+                  h/t @aaviah
                 </Card.Link>
               </Card.Body>
             </Card>
