@@ -62,7 +62,12 @@ func cancelAnyPendingInvites(plexCxn *plex.Plex, email string) {
 	invites, _ := plexCxn.GetInvitedFriends()
 	for _, invite := range invites {
 		if invite.ID == email || invite.Email == email {
-			plexCxn.RemoveInvitedFriend(invite.ID, invite.IsFriend, invite.IsServer, invite.IsHome)
+			success, err := plexCxn.RemoveInvitedFriend(invite.ID, invite.IsFriend, invite.IsServer, invite.IsHome)
+			if !success || err != nil {
+				log.Printf("failed to cancel pending invite %v, err: %v", invite, err)
+			} else {
+				log.Printf("successfully canceled invite %v", invite)
+			}
 		}
 	}
 }
