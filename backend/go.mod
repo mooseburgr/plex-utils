@@ -11,6 +11,8 @@ require (
 	go.uber.org/zap v1.20.0
 )
 
+replace github.com/jrudio/go-plex-client v0.0.0-20220106065909-9e1d590b99aa => github.com/mooseburgr/go-plex-client v0.0.0-20220130204429-0b729fc6f3c8
+
 require (
 	cloud.google.com/go/functions v1.1.0 // indirect
 	github.com/cloudevents/sdk-go/v2 v2.8.0 // indirect

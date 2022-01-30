@@ -40,6 +40,8 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cancelAnyPendingInvites(plexCxn, body.Email)
+
 	err = plexCxn.InviteFriend(plex.InviteFriendParams{
 		UsernameOrEmail: body.Email,
 		MachineID:       "d92d03d0c5f98de89a3b7699d744949bd9e78424",
@@ -52,6 +54,15 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		} else {
 			http.Error(w, "lol idk something went wrong: "+err.Error(), http.StatusBadRequest)
+		}
+	}
+}
+
+func cancelAnyPendingInvites(plexCxn *plex.Plex, email string) {
+	invites, _ := plexCxn.GetInvitedFriends()
+	for _, invite := range invites {
+		if invite.ID == email || invite.Email == email {
+			plexCxn.RemoveInvitedFriend(invite.ID, invite.IsFriend, invite.IsServer, invite.IsHome)
 		}
 	}
 }
