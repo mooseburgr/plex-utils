@@ -11,13 +11,11 @@ import (
 )
 
 const (
-	UserAgent  = "User-Agent"
-	IpStackKey = "dba9b8dc10f06971ee169e857c374d07" // free key, wgaf
+	UserAgent    = "User-Agent"
+	XFF          = "X-Forwarded-For"
+	AppEngUserIp = "Appengine-User-Ip"
+	IpStackKey   = "dba9b8dc10f06971ee169e857c374d07" // free key, wgaf
 )
-
-func initPlexCxn() (*plex.Plex, error) {
-	return plex.New("https://plex.tv", GetPlexToken())
-}
 
 func SendInvite(w http.ResponseWriter, r *http.Request) {
 	// handle OPTIONS request
@@ -37,8 +35,7 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	info, _ := GetIpInfo(r.RemoteAddr)
-	log.Printf("parsed body: %v \nfrom IP: %+v \nuser-agent: %v", body, info, r.Header[UserAgent])
+	logParse(body, r)
 
 	plexCxn, err := initPlexCxn()
 	if err != nil {
@@ -59,9 +56,20 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 			// 422 = invite is already pending or user exists
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		} else {
-			http.Error(w, "lol idk something went wrong: "+err.Error(), http.StatusBadRequest)
+			http.Error(w, "lol idk something blew up: "+err.Error(), http.StatusBadRequest)
 		}
 	}
+}
+
+func logParse(body RequestBody, r *http.Request) {
+	log.Printf("parsed body: %+v", body)
+	info, err := GetIpInfo(GetIpAddress(r))
+	log.Printf("from IP: from IP: %+v (err: %v)", info, err)
+	log.Printf("user-agent: %v", r.Header[UserAgent])
+}
+
+func GetIpAddress(r *http.Request) string {
+	return r.Header[XFF][0]
 }
 
 func cancelAnyPendingInvites(plexCxn *plex.Plex, email string) {
@@ -70,9 +78,9 @@ func cancelAnyPendingInvites(plexCxn *plex.Plex, email string) {
 		if invite.ID == email || invite.Email == email {
 			success, err := plexCxn.RemoveInvitedFriend(invite.ID, invite.IsFriend, invite.IsServer, invite.IsHome)
 			if !success || err != nil {
-				log.Printf("failed to cancel pending invite %v, err: %v", invite, err)
+				log.Printf("failed to cancel pending invite %+v, err: %v", invite, err)
 			} else {
-				log.Printf("successfully canceled invite %v", invite)
+				log.Printf("successfully canceled invite %+v", invite)
 			}
 		}
 	}
@@ -113,7 +121,7 @@ type IpResponse struct {
 
 func GetIpInfo(ip string) (IpResponse, error) {
 	var response IpResponse
-	resp, err := http.Get(fmt.Sprintf("http://api.ipstack.com/%v?access_key=%v", ip, IpStackKey))
+	resp, err := http.Get(fmt.Sprintf("http://api.ipstack.com/%s?access_key=%s", ip, IpStackKey))
 	if err != nil {
 		log.Printf("error from IP API: %v", err)
 	}
@@ -122,6 +130,10 @@ func GetIpInfo(ip string) (IpResponse, error) {
 		log.Printf("error decoding: %v", err)
 	}
 	return response, nil
+}
+
+func initPlexCxn() (*plex.Plex, error) {
+	return plex.New("https://plex.tv", GetPlexToken())
 }
 
 func GetPlexToken() string {

@@ -18,3 +18,11 @@ func TestSendInvite(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }
+
+func TestGetIpInfo(t *testing.T) {
+	ip := "76.223.122.69"
+	info, err := GetIpInfo(ip)
+
+	assert.NoError(t, err)
+	assert.Equal(t, ip, info.Ip)
+}
