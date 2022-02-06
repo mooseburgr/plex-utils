@@ -50,6 +50,8 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 		MachineID:       "d92d03d0c5f98de89a3b7699d744949bd9e78424",
 	})
 
+	go ensureAllHaveDownloadAccess(plexCxn)
+
 	if err != nil {
 		log.Printf("err from plex: %v", err)
 		if strings.HasPrefix(err.Error(), fmt.Sprint(http.StatusUnprocessableEntity)) {
@@ -57,6 +59,23 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		} else {
 			http.Error(w, "lol idk something blew up: "+err.Error(), http.StatusBadRequest)
+		}
+	}
+}
+
+func ensureAllHaveDownloadAccess(cxn *plex.Plex) {
+	friends, err := cxn.GetFriends()
+	if err != nil {
+		log.Printf("failed to get current friends: %v", err)
+		return
+	}
+	for _, friend := range friends {
+		success, err := cxn.UpdateFriendAccess(fmt.Sprint(friend.ID), plex.UpdateFriendParams{
+			AllowSync:     "1",
+			AllowChannels: "1",
+		})
+		if !success || err != nil {
+			log.Printf("failed to allow downloads for: %+v", friend)
 		}
 	}
 }
