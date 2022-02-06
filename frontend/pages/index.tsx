@@ -67,6 +67,8 @@ const Home: NextPage = () => {
           </div>
 
           <div className='col-sm-6 p-3' >
+            <Card className='shadow'>
+              <Card.Body>
             {alertState.message &&
               <Alert variant={alertState.variant} dismissible onClose={() => setAlertState({})}>
                 {alertState.message}
@@ -96,12 +98,14 @@ const Home: NextPage = () => {
                 </div>
               </div>
             </form>
+              </Card.Body>
+            </Card>
           </div>
 
           <div className='w-100' />
 
           <div className='col-sm-3 p-3'>
-            <Card>
+            <Card className='shadow'>
               <Card.Body>
                 <Card.Text>
                   hit up the #plex channel for updates, content requests, or any issues you might have
@@ -114,7 +118,7 @@ const Home: NextPage = () => {
           </div>
 
           <div className='col-sm-3 p-3'>
-            <Card>
+            <Card className='shadow'>
               <Card.Body>
                 <Card.Text>
                   here&apos;s how to tweak the default settings to optimize streaming quality
