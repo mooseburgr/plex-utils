@@ -10,6 +10,11 @@ import (
 	"strings"
 )
 
+const (
+	UserAgent  = "User-Agent"
+	IpStackKey = "dba9b8dc10f06971ee169e857c374d07" // free key, wgaf
+)
+
 func initPlexCxn() (*plex.Plex, error) {
 	return plex.New("https://plex.tv", GetPlexToken())
 }
@@ -32,7 +37,8 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	log.Printf("parsed body: %v", body)
+	info, _ := GetIpInfo(r.RemoteAddr)
+	log.Printf("parsed body: %v \nfrom IP: %+v \nuser-agent: %v", body, info, r.Header[UserAgent])
 
 	plexCxn, err := initPlexCxn()
 	if err != nil {
@@ -74,6 +80,48 @@ func cancelAnyPendingInvites(plexCxn *plex.Plex, email string) {
 
 type RequestBody struct {
 	Email string `json:"email"`
+}
+
+type IpResponse struct {
+	Ip            string  `json:"ip"`
+	Type          string  `json:"type"`
+	ContinentCode string  `json:"continent_code"`
+	ContinentName string  `json:"continent_name"`
+	CountryCode   string  `json:"country_code"`
+	CountryName   string  `json:"country_name"`
+	RegionCode    string  `json:"region_code"`
+	RegionName    string  `json:"region_name"`
+	City          string  `json:"city"`
+	Zip           string  `json:"zip"`
+	Latitude      float64 `json:"latitude"`
+	Longitude     float64 `json:"longitude"`
+	Location      struct {
+		GeonameId int    `json:"geoname_id"`
+		Capital   string `json:"capital"`
+		Languages []struct {
+			Code   string `json:"code"`
+			Name   string `json:"name"`
+			Native string `json:"native"`
+		} `json:"languages"`
+		CountryFlag             string `json:"country_flag"`
+		CountryFlagEmoji        string `json:"country_flag_emoji"`
+		CountryFlagEmojiUnicode string `json:"country_flag_emoji_unicode"`
+		CallingCode             string `json:"calling_code"`
+		IsEu                    bool   `json:"is_eu"`
+	} `json:"location"`
+}
+
+func GetIpInfo(ip string) (IpResponse, error) {
+	var response IpResponse
+	resp, err := http.Get(fmt.Sprintf("http://api.ipstack.com/%v?access_key=%v", ip, IpStackKey))
+	if err != nil {
+		log.Printf("error from IP API: %v", err)
+	}
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		log.Printf("error decoding: %v", err)
+	}
+	return response, nil
 }
 
 func GetPlexToken() string {

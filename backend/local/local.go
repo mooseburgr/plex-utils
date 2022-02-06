@@ -16,10 +16,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	UserAgent = "User-Agent"
-)
-
 var (
 	plexCxn   *plex.Plex
 	zapLogger *zap.Logger
@@ -44,7 +40,7 @@ func main() {
 	setupScheduledTasks()
 
 	// lol all of this is meaningless after VPN split tunneling is working
-	
+
 	// update: use PIA instead of nord if you want split tunneling to work
 	setupRouter().Run("localhost:42069")
 }
@@ -166,7 +162,7 @@ func logRequest(c *gin.Context) {
 		"method", c.Request.Method,
 		"path", c.FullPath(),
 		"ip", c.ClientIP(),
-		UserAgent, c.GetHeader(UserAgent))
+		api.UserAgent, c.GetHeader(api.UserAgent))
 }
 
 func logOutput(msg string, out []byte, err error) {
@@ -176,9 +172,8 @@ func logOutput(msg string, out []byte, err error) {
 }
 
 func isVpnEnabled() bool {
-	var response IpResponse
-	// here's my free key, wgaf
-	resp, err := http.Get("http://api.ipstack.com/check?access_key=dba9b8dc10f06971ee169e857c374d07")
+	var response api.IpResponse
+	resp, err := http.Get("http://api.ipstack.com/check?access_key=" + api.IpStackKey)
 	if err != nil {
 		logger.Warnf("error from IP API: %v", err)
 	}
@@ -201,33 +196,4 @@ func getFavicon(c *gin.Context) {
 		"Cache-Control":       "max-age=31536000",
 	}
 	c.DataFromReader(http.StatusOK, contentLength, contentType, reader, extraHeaders)
-}
-
-type IpResponse struct {
-	Ip            string  `json:"ip"`
-	Type          string  `json:"type"`
-	ContinentCode string  `json:"continent_code"`
-	ContinentName string  `json:"continent_name"`
-	CountryCode   string  `json:"country_code"`
-	CountryName   string  `json:"country_name"`
-	RegionCode    string  `json:"region_code"`
-	RegionName    string  `json:"region_name"`
-	City          string  `json:"city"`
-	Zip           string  `json:"zip"`
-	Latitude      float64 `json:"latitude"`
-	Longitude     float64 `json:"longitude"`
-	Location      struct {
-		GeonameId int    `json:"geoname_id"`
-		Capital   string `json:"capital"`
-		Languages []struct {
-			Code   string `json:"code"`
-			Name   string `json:"name"`
-			Native string `json:"native"`
-		} `json:"languages"`
-		CountryFlag             string `json:"country_flag"`
-		CountryFlagEmoji        string `json:"country_flag_emoji"`
-		CountryFlagEmojiUnicode string `json:"country_flag_emoji_unicode"`
-		CallingCode             string `json:"calling_code"`
-		IsEu                    bool   `json:"is_eu"`
-	} `json:"location"`
 }
