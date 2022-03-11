@@ -71,7 +71,7 @@ func excludePrivateLabel(cxn *plex.Plex, email string) {
 		log.Printf("failed to get current friends: %v", err)
 	}
 	for _, friend := range friends {
-		if friend.Email == email {
+		if strEq(friend.Email, email) {
 			cxn.UpdateFriendAccess(fmt.Sprint(friend.ID), plex.UpdateFriendParams{
 				FilterTelevision: "label!=private",
 				FilterMusic:      "label!=private",
@@ -109,10 +109,14 @@ func GetIpAddress(r *http.Request) string {
 	return r.Header[XFF][0]
 }
 
+func strEq(i, j string) bool {
+	return strings.ToLower(i) == strings.ToLower(j)
+}
+
 func cancelAnyPendingInvites(plexCxn *plex.Plex, email string) {
 	invites, _ := plexCxn.GetInvitedFriends()
 	for _, invite := range invites {
-		if invite.ID == email || invite.Email == email {
+		if strEq(invite.ID, email) || strEq(invite.Email, email) {
 			success, err := plexCxn.RemoveInvitedFriend(invite.ID, invite.IsFriend, invite.IsServer, invite.IsHome)
 			if !success || err != nil {
 				log.Printf("failed to cancel pending invite %+v, err: %v", invite, err)
