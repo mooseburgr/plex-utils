@@ -50,9 +50,7 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 		MachineID:       "d92d03d0c5f98de89a3b7699d744949bd9e78424",
 	})
 
-	excludePrivateLabel(plexCxn, body.Email)
-
-	go ensureAllHaveDownloadAccess(plexCxn)
+	updateAccess(plexCxn, body.Email)
 
 	if err != nil {
 		log.Printf("err from plex: %v", err)
@@ -65,7 +63,7 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func excludePrivateLabel(cxn *plex.Plex, email string) {
+func updateAccess(cxn *plex.Plex, email string) {
 	friends, err := cxn.GetFriends()
 	if err != nil {
 		log.Printf("failed to get current friends: %v", err)
@@ -73,27 +71,13 @@ func excludePrivateLabel(cxn *plex.Plex, email string) {
 	for _, friend := range friends {
 		if friend.Email == email {
 			cxn.UpdateFriendAccess(fmt.Sprint(friend.ID), plex.UpdateFriendParams{
+				AllowSync:        "1",
+				AllowChannels:    "1",
 				FilterTelevision: "label!=private",
 				FilterMusic:      "label!=private",
 				FilterPhotos:     "label!=private",
 				FilterMovies:     "label!=private",
 			})
-		}
-	}
-}
-
-func ensureAllHaveDownloadAccess(cxn *plex.Plex) {
-	friends, err := cxn.GetFriends()
-	if err != nil {
-		log.Printf("failed to get current friends: %v", err)
-	}
-	for _, friend := range friends {
-		success, err := cxn.UpdateFriendAccess(fmt.Sprint(friend.ID), plex.UpdateFriendParams{
-			AllowSync:     "1",
-			AllowChannels: "1",
-		})
-		if !success || err != nil {
-			log.Printf("failed to allow downloads for: %+v", friend)
 		}
 	}
 }
