@@ -52,7 +52,7 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 
 	excludePrivateLabel(plexCxn, body.Email)
 
-	go ensureAllHaveDownloadAccess(plexCxn)
+	// go ensureAllHaveDownloadAccess(plexCxn)
 
 	if err != nil {
 		log.Printf("err from plex: %v", err)
