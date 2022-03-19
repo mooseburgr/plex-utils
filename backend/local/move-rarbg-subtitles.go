@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -20,6 +23,8 @@ var subtitleTypeMap = map[int]string{
 func main() {
 	root := "G:\\TV Shows"
 	var pathsToDelete []string
+
+	cleanUpNullFiles(root)
 
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -60,9 +65,14 @@ func handleSubsDir(subsRoot string) error {
 					strings.Split(path, string(os.PathSeparator)+"Subs"+string(os.PathSeparator))[0],
 					d.Name()+determineSubtitleType(sub.Name(), i, len(subtitles)),
 				)
-				info, _ := sub.Info()
-				log.Printf("copying (size %v) %v \n\tto %v", info.Size(), oldPath, newPath)
-				copyFile(oldPath, newPath)
+
+				if areFilesEqual(oldPath, newPath) {
+					log.Printf("files are equal, not copying: %v", oldPath)
+				} else {
+					info, _ := sub.Info()
+					log.Printf("copying (size %v) %v \n\tto %v", info.Size(), oldPath, newPath)
+					copyFile(oldPath, newPath)
+				}
 			}
 			log.Printf("finished %v \n\n", path)
 		}
@@ -71,20 +81,35 @@ func handleSubsDir(subsRoot string) error {
 	return err
 }
 
-func copyFile(read string, write string) {
-	r, err := os.Open(read)
+func copyFile(src string, dst string) (int64, error) {
+	sourceFileStat, err := os.Stat(src)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
-	defer r.Close()
-	w, err := os.Create(write)
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
-	defer w.Close()
-	if _, err = w.ReadFrom(r); err != nil {
-		log.Fatal(err)
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
 	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
+}
+
+func areFilesEqual(src, dest string) bool {
+	srcBytes, _ := os.ReadFile(src)
+	destBytes, _ := os.ReadFile(dest)
+	return bytes.Equal(srcBytes, destBytes)
 }
 
 func getSortedEnglishSubs(path string) []os.DirEntry {
@@ -101,7 +126,6 @@ func getSortedEnglishSubs(path string) []os.DirEntry {
 		jInfo, _ := englishSubs[j].Info()
 		return iInfo.Size() > jInfo.Size()
 	})
-	log.Printf("sorted: %v", englishSubs)
 	return englishSubs
 }
 
@@ -111,4 +135,17 @@ func determineSubtitleType(filename string, sortIndex int, totalFiles int) strin
 		return subtitleTypeMap[1] + filepath.Ext(filename)
 	}
 	return subtitleTypeMap[sortIndex] + filepath.Ext(filename)
+}
+
+func cleanUpNullFiles(root string) {
+	filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if !d.IsDir() && filepath.Ext(path) == ".srt" {
+			data, _ := os.ReadFile(path)
+			if string(bytes.Trim(data, "\x00")) == "" {
+				os.RemoveAll(path)
+				log.Printf("removed: %v", path)
+			}
+		}
+		return nil
+	})
 }
