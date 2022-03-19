@@ -36,12 +36,12 @@ func main() {
 	log.Printf("donezo. final err: %v", err)
 	if err == nil {
 		log.Printf("finna delete: \n%v", strings.Join(pathsToDelete, "\n"))
-		for _, path := range pathsToDelete {
-			err := os.RemoveAll(path)
-			if err != nil {
-				log.Printf("failed to delete %v: %v", path, err)
-			}
-		}
+		//for _, path := range pathsToDelete {
+		//	err := os.RemoveAll(path)
+		//	if err != nil {
+		//		log.Printf("failed to delete %v: %v", path, err)
+		//	}
+		//}
 	}
 }
 
@@ -53,18 +53,16 @@ func handleSubsDir(subsRoot string) error {
 		}
 		if d.IsDir() && d.Name() != "Subs" {
 			log.Printf("handling epi subs dir: %s", path)
-			subtitles, _ := os.ReadDir(path)
-			sort.Sort(BySizeDesc(subtitles))
+			subtitles := getSortedEnglishSubs(path)
 			for i, sub := range subtitles {
 				oldPath := filepath.Join(path, sub.Name())
-				newPath := filepath.Join(filepath.Dir(filepath.Dir(path)), // two directories up
-					d.Name()+subtitleTypeMap[i]+filepath.Ext(sub.Name()))
+				newPath := filepath.Join(
+					strings.Split(path, string(os.PathSeparator)+"Subs"+string(os.PathSeparator))[0],
+					d.Name()+determineSubtitleType(sub.Name(), i, len(subtitles)),
+				)
 				info, _ := sub.Info()
-				log.Printf("renaming (size %v) %v \n\tto %v", info.Size(), oldPath, newPath)
-				err = os.Rename(oldPath, newPath)
-				if err != nil {
-					log.Fatal(err)
-				}
+				log.Printf("copying (size %v) %v \n\tto %v", info.Size(), oldPath, newPath)
+				copyFile(oldPath, newPath)
 			}
 			log.Printf("finished %v \n\n", path)
 		}
@@ -73,14 +71,44 @@ func handleSubsDir(subsRoot string) error {
 	return err
 }
 
-type BySizeDesc []os.DirEntry
-
-func (b BySizeDesc) Len() int { return len(b) }
-
-func (b BySizeDesc) Less(i, j int) bool {
-	iInfo, _ := b[i].Info()
-	jInfo, _ := b[j].Info()
-	return iInfo.Size() > jInfo.Size()
+func copyFile(read string, write string) {
+	r, err := os.Open(read)
+	if err != nil {
+		panic(err)
+	}
+	defer r.Close()
+	w, err := os.Create(write)
+	if err != nil {
+		panic(err)
+	}
+	defer w.Close()
+	if _, err = w.ReadFrom(r); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func (b BySizeDesc) Swap(i, j int) { b[i], b[j] = b[j], b[i] }
+func getSortedEnglishSubs(path string) []os.DirEntry {
+	var englishSubs []os.DirEntry
+	subtitles, _ := os.ReadDir(path)
+	for _, sub := range subtitles {
+		if strings.Contains(sub.Name(), "English") {
+			englishSubs = append(englishSubs, sub)
+		}
+	}
+	// sort by size desc
+	sort.Slice(englishSubs, func(i, j int) bool {
+		iInfo, _ := englishSubs[i].Info()
+		jInfo, _ := englishSubs[j].Info()
+		return iInfo.Size() > jInfo.Size()
+	})
+	log.Printf("sorted: %v", englishSubs)
+	return englishSubs
+}
+
+func determineSubtitleType(filename string, sortIndex int, totalFiles int) string {
+	if totalFiles == 1 {
+		// if only one file, assume non-SDH
+		return subtitleTypeMap[1] + filepath.Ext(filename)
+	}
+	return subtitleTypeMap[sortIndex] + filepath.Ext(filename)
+}
