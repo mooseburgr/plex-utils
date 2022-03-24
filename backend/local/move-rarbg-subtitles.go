@@ -20,8 +20,15 @@ var subtitleTypeMap = map[int]string{
 	2: ".en.forced",
 }
 
+const (
+	tvRoot     = "G:\\TV Shows"
+	moviesRoot = "G:\\Movies"
+	mp4Ext     = ".mp4"
+	mkvExt     = ".mkv"
+)
+
 func main() {
-	root := "G:\\TV Shows"
+	root := tvRoot
 	var pathsToDelete []string
 
 	cleanUpNullFiles(root)
@@ -51,37 +58,76 @@ func main() {
 }
 
 func handleSubsDir(subsRoot string) error {
+	if strings.HasPrefix(subsRoot, tvRoot) {
+		return handleTvSubsDir(subsRoot)
+	} else if strings.HasPrefix(subsRoot, moviesRoot) {
+		return handleMovieSubsDir(subsRoot)
+	}
+	return nil
+}
+
+func handleMovieSubsDir(subsRoot string) error {
+	// e.g. G:\Movies\Kimi.2022.1080p.WEBRip.x265-RARBG\Subs
+	files, err := os.ReadDir(getTargetDir(subsRoot))
+	if err != nil {
+		return err
+	}
+	var targetVideoFile string
+	for _, file := range files {
+		if filepath.Ext(file.Name()) == mp4Ext {
+			targetVideoFile = strings.TrimSuffix(file.Name(), mp4Ext)
+		} else if filepath.Ext(file.Name()) == mkvExt {
+			targetVideoFile = strings.TrimSuffix(file.Name(), mkvExt)
+		}
+	}
+	copySubs(subsRoot, targetVideoFile)
+	return nil
+}
+
+func handleTvSubsDir(subsRoot string) error {
 	// e.g. G:\TV Shows\Better Call Saul\Better.Call.Saul.S05.1080p.BluRay.x265-RARBG\Subs
 	err := filepath.WalkDir(subsRoot, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if d.IsDir() && d.Name() != "Subs" {
-			log.Printf("handling epi subs dir: %s", path)
-			subtitles := getSortedEnglishSubs(path)
-			for i, sub := range subtitles {
-				oldPath := filepath.Join(path, sub.Name())
-				newPath := filepath.Join(
-					strings.Split(path, string(os.PathSeparator)+"Subs"+string(os.PathSeparator))[0],
-					d.Name()+determineSubtitleType(sub.Name(), i, len(subtitles)),
-				)
-
-				if areFilesEqual(oldPath, newPath) {
-					log.Printf("files are equal, not copying: %v", oldPath)
-				} else {
-					info, _ := sub.Info()
-					log.Printf("copying (size %v) %v \n\tto %v", info.Size(), oldPath, newPath)
-					copyFile(oldPath, newPath)
-				}
-			}
-			log.Printf("finished %v \n\n", path)
+			copySubs(path, d.Name())
 		}
 		return nil
 	})
 	return err
 }
 
-func copyFile(src string, dst string) (int64, error) {
+func getTargetDir(path string) string {
+	return strings.Split(path+string(os.PathSeparator), string(os.PathSeparator)+"Subs"+string(os.PathSeparator))[0]
+}
+
+func copySubs(subsPath, targetVideoFile string) {
+	if targetVideoFile == "" {
+		log.Printf("no target video file for path: %v", subsPath)
+		return
+	}
+
+	// log.Printf("handling subs dir: %s", subsPath)
+	subtitles := getSortedEnglishSubs(subsPath)
+	for i, sub := range subtitles {
+		oldPath := filepath.Join(subsPath, sub.Name())
+		newPath := filepath.Join(getTargetDir(subsPath),
+			targetVideoFile+determineSubtitleType(sub.Name(), i, len(subtitles)),
+		)
+
+		if areFilesEqual(oldPath, newPath) {
+			//log.Printf("files are equal, not copying: %v", oldPath)
+		} else {
+			info, _ := sub.Info()
+			log.Printf("copying (size %v) %v \n\tto %v", info.Size(), oldPath, newPath)
+			copyFile(oldPath, newPath)
+		}
+	}
+	// log.Printf("finished %v \n\n", subsPath)
+}
+
+func copyFile(src string, dest string) (int64, error) {
 	sourceFileStat, err := os.Stat(src)
 	if err != nil {
 		return 0, err
@@ -97,7 +143,7 @@ func copyFile(src string, dst string) (int64, error) {
 	}
 	defer source.Close()
 
-	destination, err := os.Create(dst)
+	destination, err := os.Create(dest)
 	if err != nil {
 		return 0, err
 	}
