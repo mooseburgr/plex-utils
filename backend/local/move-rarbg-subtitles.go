@@ -28,33 +28,30 @@ const (
 )
 
 func main() {
-	root := tvRoot
 	var pathsToDelete []string
-
-	cleanUpNullFiles(root)
-
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() && d.Name() == "Subs" {
-			err = handleSubsDir(path)
-			if err == nil {
-				pathsToDelete = append(pathsToDelete, path)
+	for _, root := range []string{tvRoot, moviesRoot} {
+		cleanUpNullFiles(root)
+		filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
 			}
-		}
-		return nil
-	})
-	log.Printf("donezo. final err: %v", err)
-	if err == nil {
-		log.Printf("finna delete: \n%v", strings.Join(pathsToDelete, "\n"))
-		//for _, path := range pathsToDelete {
-		//	err := os.RemoveAll(path)
-		//	if err != nil {
-		//		log.Printf("failed to delete %v: %v", path, err)
-		//	}
-		//}
+			if d.IsDir() && d.Name() == "Subs" {
+				err = handleSubsDir(path)
+				if err == nil {
+					pathsToDelete = append(pathsToDelete, path)
+				}
+			}
+			return nil
+		})
 	}
+
+	//log.Printf("finna delete: \n%v", strings.Join(pathsToDelete, "\n"))
+	//for _, path := range pathsToDelete {
+	//	err := os.RemoveAll(path)
+	//	if err != nil {
+	//		log.Printf("failed to delete %v: %v", path, err)
+	//	}
+	//}
 }
 
 func handleSubsDir(subsRoot string) error {
