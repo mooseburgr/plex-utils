@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 )
 
 // RARBG's 3/4/5_English.srt mapping doesn't appear to be consistent,
@@ -29,6 +30,7 @@ const (
 
 func main() {
 	var pathsToDelete []string
+	var mu sync.Mutex
 	for _, root := range []string{tvRoot, moviesRoot} {
 		cleanUpNullFiles(root)
 		filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
@@ -36,10 +38,14 @@ func main() {
 				return err
 			}
 			if d.IsDir() && d.Name() == "Subs" {
-				err = handleSubsDir(path)
-				if err == nil {
-					pathsToDelete = append(pathsToDelete, path)
-				}
+				go func() {
+					err = handleSubsDir(path)
+					if err == nil {
+						mu.Lock()
+						pathsToDelete = append(pathsToDelete, path)
+						mu.Unlock()
+					}
+				}()
 			}
 			return nil
 		})
@@ -110,7 +116,7 @@ func copySubs(subsPath, targetVideoFile string) {
 	for i, sub := range subtitles {
 		oldPath := filepath.Join(subsPath, sub.Name())
 		newPath := filepath.Join(getTargetDir(subsPath),
-			targetVideoFile+determineSubtitleType(sub.Name(), i, len(subtitles)),
+			targetVideoFile+determineSubtitleType(sub.Name(), i, subtitles),
 		)
 
 		if areFilesEqual(oldPath, newPath) {
@@ -172,11 +178,20 @@ func getSortedEnglishSubs(path string) []os.DirEntry {
 	return englishSubs
 }
 
-func determineSubtitleType(filename string, sortIndex int, totalFiles int) string {
-	if totalFiles == 1 {
+func determineSubtitleType(filename string, sortIndex int, files []os.DirEntry) string {
+	if len(files) == 1 {
 		// if only one file, assume non-SDH
 		return subtitleTypeMap[1] + filepath.Ext(filename)
 	}
+	if len(files) == 2 {
+		bigFile, _ := files[0].Info()
+		smallFile, _ := files[1].Info()
+		// small file is significantly smaller, assume we have .en and .en.forced
+		if float64(smallFile.Size())/float64(bigFile.Size()) < .3 {
+			return subtitleTypeMap[sortIndex+1] + filepath.Ext(filename)
+		}
+	}
+
 	return subtitleTypeMap[sortIndex] + filepath.Ext(filename)
 }
 
@@ -188,6 +203,10 @@ func cleanUpNullFiles(root string) {
 				os.RemoveAll(path)
 				log.Printf("removed: %v", path)
 			}
+		}
+		if !d.IsDir() && d.Name() == "RARBG_DO_NOT_MIRROR.exe" {
+			os.RemoveAll(path)
+			log.Printf("removed: %v", path)
 		}
 		return nil
 	})
