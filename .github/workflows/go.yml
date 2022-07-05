@@ -26,4 +26,6 @@ jobs:
       
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v3.2.0
+      with:
+          working-directory: backend
 
