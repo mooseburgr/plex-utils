@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -54,15 +55,23 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 
 	// go ensureAllHaveDownloadAccess(plexCxn)
 
+	postToSlack(body.Email)
+
 	if err != nil {
 		log.Printf("err from plex: %v", err)
-		if strings.HasPrefix(err.Error(), fmt.Sprint(http.StatusUnprocessableEntity)) {
+		if strings.HasPrefix(err.Error(), strconv.Itoa(http.StatusUnprocessableEntity)) {
 			// 422 = invite is already pending or user exists
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		} else {
 			http.Error(w, "lol idk something blew up: "+err.Error(), http.StatusBadRequest)
 		}
 	}
+}
+
+func postToSlack(email string) {
+	resp, err := http.Post(os.Getenv("SLACK_WEBHOOK_URL"), "application/json",
+		strings.NewReader(fmt.Sprintf("{\"text\":\"invited to Plex: `%s`\"}", email)))
+	log.Printf("slack response: %+v, err: %v", resp, err)
 }
 
 func excludePrivateLabel(cxn *plex.Plex, email string) {
