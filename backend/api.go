@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -54,9 +55,11 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 
 	// go ensureAllHaveDownloadAccess(plexCxn)
 
+	postToSlack(body.Email)
+
 	if err != nil {
 		log.Printf("err from plex: %v", err)
-		if strings.HasPrefix(err.Error(), fmt.Sprint(http.StatusUnprocessableEntity)) {
+		if strings.HasPrefix(err.Error(), strconv.Itoa(http.StatusUnprocessableEntity)) {
 			// 422 = invite is already pending or user exists
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		} else {
@@ -65,19 +68,26 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func postToSlack(email string) {
+	resp, err := http.Post(os.Getenv("SLACK_WEBHOOK_URL"), "application/json",
+		strings.NewReader(fmt.Sprintf("{\"text\":\"invited to Plex: `%s`\"}", email)))
+	log.Printf("slack response: %+v, err: %v", resp, err)
+}
+
 func excludePrivateLabel(cxn *plex.Plex, email string) {
 	friends, err := cxn.GetFriends()
 	if err != nil {
 		log.Printf("failed to get current friends: %v", err)
 	}
 	for _, friend := range friends {
-		if strEq(friend.Email, email) {
-			cxn.UpdateFriendAccess(fmt.Sprint(friend.ID), plex.UpdateFriendParams{
+		if strings.EqualFold(friend.Email, email) {
+			success, err := cxn.UpdateFriendAccess(fmt.Sprint(friend.ID), plex.UpdateFriendParams{
 				FilterTelevision: "label!=private",
 				FilterMusic:      "label!=private",
 				FilterPhotos:     "label!=private",
 				FilterMovies:     "label!=private",
 			})
+			log.Printf("updated friend %+v, success: %v, err: %v", friend, success, err)
 		}
 	}
 }
@@ -109,14 +119,10 @@ func GetIpAddress(r *http.Request) string {
 	return r.Header[XFF][0]
 }
 
-func strEq(i, j string) bool {
-	return strings.ToLower(i) == strings.ToLower(j)
-}
-
 func cancelAnyPendingInvites(plexCxn *plex.Plex, email string) {
 	invites, _ := plexCxn.GetInvitedFriends()
 	for _, invite := range invites {
-		if strEq(invite.ID, email) || strEq(invite.Email, email) {
+		if strings.EqualFold(invite.ID, email) || strings.EqualFold(invite.Email, email) {
 			success, err := plexCxn.RemoveInvitedFriend(invite.ID, invite.IsFriend, invite.IsServer, invite.IsHome)
 			if !success || err != nil {
 				log.Printf("failed to cancel pending invite %+v, err: %v", invite, err)

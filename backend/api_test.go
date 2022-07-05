@@ -4,11 +4,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
 
-func TestSendInvite(t *testing.T) {
+func Test_SendInvite(t *testing.T) {
 	t.Skip("local ad-hoc only")
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodPost, "/",
@@ -19,10 +20,16 @@ func TestSendInvite(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestGetIpInfo(t *testing.T) {
+func Test_GetIpInfo(t *testing.T) {
 	ip := "76.223.122.69"
 	info, err := GetIpInfo(ip)
 
 	assert.NoError(t, err)
 	assert.Equal(t, ip, info.Ip)
+}
+
+func Test_postToSlack(t *testing.T) {
+	t.Skip("local ad-hoc only")
+	os.Setenv("SLACK_WEBHOOK_URL", "https://hooks.slack.com/services/")
+	postToSlack("test@invite.com")
 }
