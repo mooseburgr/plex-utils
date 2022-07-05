@@ -28,5 +28,5 @@ jobs:
       uses: golangci/golangci-lint-action@v3.2.0
       with:
         working-directory: backend
-        only-new-issues: true
+#        only-new-issues: true
 
