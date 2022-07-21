@@ -46,29 +46,21 @@ const Home: NextPage = () => {
   }
 
   return (
-    <div className="container">
+    <>
       <Head>
         <title>hello there</title>
-        <meta name="description" content="invite yourself to my plex server" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"></meta>
-        <link rel="icon" href="https://avatars.slack-edge.com/2022-01-11/2950060844657_4cae9e95e482718f4ef6_88.jpg" />
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
-          rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossOrigin="anonymous" />
-        {/* <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" /> */}
       </Head>
+      <div className="row justify-content-center">
+        <div className="col-12 p-3 text-center">
+          <h1 onClick={() => window.open('https://www.youtube.com/watch?v=rEq1Z0bjdwc', '_blank')}>
+            hello there
+          </h1>
+          invite yourself to my plex server
+        </div>
 
-      <main>
-        <div className="row justify-content-center">
-          <div className="col-12 p-3 text-center">
-            <h1 onClick={() => window.open('https://www.youtube.com/watch?v=rEq1Z0bjdwc', '_blank')}>
-              hello there
-            </h1>
-            invite yourself to my plex server
-          </div>
-
-          <div className='col-sm-6 p-3' >
-            <Card className='shadow'>
-              <Card.Body>
+        <div className='col-sm-6 p-3' >
+          <Card className='shadow'>
+            <Card.Body>
             {alertState.message &&
               <Alert variant={alertState.variant} dismissible onClose={() => setAlertState({})}>
                 {alertState.message}
@@ -98,42 +90,40 @@ const Home: NextPage = () => {
                 </div>
               </div>
             </form>
-              </Card.Body>
-            </Card>
-          </div>
-
-          <div className='w-100' />
-
-          <div className='col-sm-3 p-3'>
-            <Card className='shadow'>
-              <Card.Body>
-                <Card.Text>
-                  hit up the #plex channel for updates, content requests, or any issues you might have
-                </Card.Text>
-                <Card.Link href="https://join.slack.com/t/bagziga/shared_invite/zt-a2uj179c-hvwdWXLf3g0mT1eNqAG_KQ" target="_blank" rel="noopener noreferrer">
-                  <SlackIcon /> <span className='p-1'>join the slack</span>
-                </Card.Link>
-              </Card.Body>
-            </Card>
-          </div>
-
-          <div className='col-sm-3 p-3'>
-            <Card className='shadow'>
-              <Card.Body>
-                <Card.Text>
-                  here&apos;s how to tweak the default settings to optimize streaming quality
-                </Card.Text>
-                <Card.Link href="https://www.aaviah.com/plex" target="_blank" rel="noopener noreferrer">
-                  h/t @aaviah
-                </Card.Link>
-              </Card.Body>
-            </Card>
-          </div>
-
+            </Card.Body>
+          </Card>
         </div>
 
-      </main>
-    </div>
+        <div className='w-100' />
+
+        <div className='col-sm-3 p-3'>
+          <Card className='shadow'>
+            <Card.Body>
+              <Card.Text>
+                hit up the #plex channel for updates, content requests, or any issues you might have
+              </Card.Text>
+              <Card.Link href="https://join.slack.com/t/bagziga/shared_invite/zt-a2uj179c-hvwdWXLf3g0mT1eNqAG_KQ" target="_blank" rel="noopener noreferrer">
+                <SlackIcon /> <span className='p-1'>join the slack</span>
+              </Card.Link>
+            </Card.Body>
+          </Card>
+        </div>
+
+        <div className='col-sm-3 p-3'>
+          <Card className='shadow'>
+            <Card.Body>
+              <Card.Text>
+                here&apos;s how to tweak the default settings to optimize streaming quality
+              </Card.Text>
+              <Card.Link href="https://www.aaviah.com/plex" target="_blank" rel="noopener noreferrer">
+                h/t @aaviah
+              </Card.Link>
+            </Card.Body>
+          </Card>
+        </div>
+
+      </div>
+    </>
   )
 }
 
