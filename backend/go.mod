@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/GoogleCloudPlatform/functions-framework-go v1.5.3
 	github.com/gin-gonic/gin v1.8.1
-	github.com/go-co-op/gocron v1.15.1
+	github.com/go-co-op/gocron v1.16.1
 	github.com/jrudio/go-plex-client v0.0.0-20220428052413-e5b4386beb17
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/zap v1.21.0
