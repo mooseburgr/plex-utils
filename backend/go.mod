@@ -1,6 +1,6 @@
 module github.com/mooseburgr/plex-utils
 
-go 1.18
+go 1.19
 
 require (
 	github.com/GoogleCloudPlatform/functions-framework-go v1.5.3
