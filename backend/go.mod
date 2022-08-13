@@ -3,7 +3,7 @@ module github.com/mooseburgr/plex-utils
 go 1.19
 
 require (
-	github.com/GoogleCloudPlatform/functions-framework-go v1.6.0
+	github.com/GoogleCloudPlatform/functions-framework-go v1.6.1
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-co-op/gocron v1.16.2
 	github.com/jrudio/go-plex-client v0.0.0-20220428052413-e5b4386beb17
