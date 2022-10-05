@@ -66,12 +66,12 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "lol idk something blew up: "+err.Error(), http.StatusBadRequest)
 		}
 	} else {
-		postToSlack(body.Email, r)
+		postToSlack(body.Email, GetIpAddress(r))
 	}
 }
 
-func postToSlack(email string, req *http.Request) {
-	ipInfo, err := GetIpInfo(GetIpAddress(req))
+func postToSlack(email, ip string) {
+	ipInfo, err := GetIpInfo(ip)
 
 	resp, err := http.Post(os.Getenv("SLACK_WEBHOOK_URL"), "application/json",
 		strings.NewReader(fmt.Sprintf(`{"text":"invited to Plex: '%s' from %s, %s (%s)"}`,

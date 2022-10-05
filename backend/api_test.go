@@ -36,5 +36,5 @@ func Test_GetIpInfo(t *testing.T) {
 func Test_postToSlack(t *testing.T) {
 	t.Skip("local ad-hoc only")
 	os.Setenv("SLACK_WEBHOOK_URL", "https://hooks.slack.com/services/")
-	postToSlack("test@invite.com")
+	postToSlack("test@invite.com", "76.223.122.69")
 }
