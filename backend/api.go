@@ -73,7 +73,7 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 func postToSlack(email, ip string) {
 	ipInfo, err := GetIpInfo(ip)
 
-	msg := fmt.Sprintf("invited to Plex: `%s` from %s, %s (`%s`)", email,
+	msg := fmt.Sprintf("invited to Plex: `%s` in %s, %s (`%s`)", email,
 		ipInfo.City, ipInfo.RegionCode, ipInfo.Ip)
 
 	resp, err := http.Post(os.Getenv("SLACK_WEBHOOK_URL"), "application/json",
