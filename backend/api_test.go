@@ -26,6 +26,11 @@ func Test_GetIpInfo(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, ip, info.Ip)
+
+	info2, err := GetIpInfo(ip)
+
+	assert.NoError(t, err)
+	assert.Equal(t, info, info2)
 }
 
 func Test_postToSlack(t *testing.T) {

@@ -18,6 +18,8 @@ const (
 	IpStackKey   = "dba9b8dc10f06971ee169e857c374d07" // free key, wgaf
 )
 
+var ipInfoMap = make(map[string]IpResponse)
+
 func SendInvite(w http.ResponseWriter, r *http.Request) {
 	// handle OPTIONS request
 	if r.Method == http.MethodOptions {
@@ -55,8 +57,6 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 
 	// go ensureAllHaveDownloadAccess(plexCxn)
 
-	postToSlack(body.Email)
-
 	if err != nil {
 		log.Printf("err from plex: %v", err)
 		if strings.HasPrefix(err.Error(), strconv.Itoa(http.StatusUnprocessableEntity)) {
@@ -65,12 +65,17 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, "lol idk something blew up: "+err.Error(), http.StatusBadRequest)
 		}
+	} else {
+		postToSlack(body.Email, r)
 	}
 }
 
-func postToSlack(email string) {
+func postToSlack(email string, req *http.Request) {
+	ipInfo, err := GetIpInfo(GetIpAddress(req))
+
 	resp, err := http.Post(os.Getenv("SLACK_WEBHOOK_URL"), "application/json",
-		strings.NewReader(fmt.Sprintf("{\"text\":\"invited to Plex: `%s`\"}", email)))
+		strings.NewReader(fmt.Sprintf(`{"text":"invited to Plex: '%s' from %s, %s (%s)"}`,
+			email, ipInfo.City, ipInfo.RegionCode, ipInfo.Ip)))
 	log.Printf("slack response: %+v, err: %v", resp, err)
 }
 
@@ -167,6 +172,10 @@ type IpResponse struct {
 }
 
 func GetIpInfo(ip string) (IpResponse, error) {
+	if info, found := ipInfoMap[ip]; found {
+		return info, nil
+	}
+
 	var response IpResponse
 	resp, err := http.Get(fmt.Sprintf("http://api.ipstack.com/%s?access_key=%s", ip, IpStackKey))
 	if err != nil {
@@ -176,6 +185,7 @@ func GetIpInfo(ip string) (IpResponse, error) {
 	if err != nil {
 		log.Printf("error decoding: %v", err)
 	}
+	ipInfoMap[ip] = response
 	return response, nil
 }
 
