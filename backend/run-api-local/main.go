@@ -9,7 +9,7 @@ import (
 	"github.com/GoogleCloudPlatform/functions-framework-go/funcframework"
 )
 
-func main() {
+func mainLocalFunc() {
 	ctx := context.Background()
 	if err := funcframework.RegisterHTTPFunctionContext(ctx, "/", api.SendInvite); err != nil {
 		log.Fatalf("funcframework.RegisterHTTPFunctionContext: %v\n", err)

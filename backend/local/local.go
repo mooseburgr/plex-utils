@@ -27,7 +27,7 @@ func init() {
 	logger = zapLogger.Sugar()
 }
 
-func main() {
+func mainOld() {
 	defer zapLogger.Sync()
 
 	plexCxn, err := plex.New("http://127.0.0.1:32400", api.GetPlexToken())
