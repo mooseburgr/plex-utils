@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 )
 
 // RARBG's 3/4/5_English.srt mapping doesn't appear to be consistent,
@@ -29,6 +30,7 @@ const (
 )
 
 func main() {
+	start := time.Now()
 	var pathsToDelete []string
 	var mu sync.Mutex
 	for _, root := range []string{tvRoot, moviesRoot} {
@@ -38,16 +40,14 @@ func main() {
 				return err
 			}
 			if d.IsDir() && d.Name() == "Subs" {
-				go func() {
-					err = handleSubsDir(path)
-					if err == nil {
-						mu.Lock()
-						pathsToDelete = append(pathsToDelete, path)
-						mu.Unlock()
-					}
-				}()
+				err = handleSubsDir(path)
+				if err == nil {
+					mu.Lock()
+					pathsToDelete = append(pathsToDelete, path)
+					mu.Unlock()
+				}
 			}
-			return nil
+			return err
 		})
 	}
 
@@ -58,6 +58,8 @@ func main() {
 	//		log.Printf("failed to delete %v: %v", path, err)
 	//	}
 	//}
+
+	log.Printf("finished after %v", time.Since(start))
 }
 
 func handleSubsDir(subsRoot string) error {
@@ -89,7 +91,7 @@ func handleMovieSubsDir(subsRoot string) error {
 
 func handleTvSubsDir(subsRoot string) error {
 	// e.g. G:\TV Shows\Better Call Saul\Better.Call.Saul.S05.1080p.BluRay.x265-RARBG\Subs
-	err := filepath.WalkDir(subsRoot, func(path string, d fs.DirEntry, err error) error {
+	return filepath.WalkDir(subsRoot, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -98,7 +100,6 @@ func handleTvSubsDir(subsRoot string) error {
 		}
 		return nil
 	})
-	return err
 }
 
 func getTargetDir(path string) string {
