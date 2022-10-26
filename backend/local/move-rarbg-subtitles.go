@@ -196,6 +196,7 @@ func determineSubtitleType(filename string, sortIndex int, files []os.DirEntry) 
 	return subtitleTypeMap[sortIndex] + filepath.Ext(filename)
 }
 
+//  del "\\?\G:\TV Shows\Marvels Agents of S.H.I.E.L.D.\"
 func cleanUpNullFiles(root string) {
 	filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if !d.IsDir() && filepath.Ext(path) == ".srt" {
