@@ -34,7 +34,7 @@ func main() {
 	var pathsToDelete []string
 	var mu sync.Mutex
 	for _, root := range []string{tvRoot, moviesRoot} {
-		cleanUpNullFiles(root)
+		go cleanUpFiles(root)
 		filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
@@ -196,19 +196,23 @@ func determineSubtitleType(filename string, sortIndex int, files []os.DirEntry) 
 	return subtitleTypeMap[sortIndex] + filepath.Ext(filename)
 }
 
-//  del "\\?\G:\TV Shows\Marvels Agents of S.H.I.E.L.D.\"
-func cleanUpNullFiles(root string) {
+// del "\\?\G:\TV Shows\Marvels Agents of S.H.I.E.L.D.\"
+func cleanUpFiles(root string) {
 	filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-		if !d.IsDir() && filepath.Ext(path) == ".srt" {
-			data, _ := os.ReadFile(path)
-			if string(bytes.Trim(data, "\x00")) == "" {
+		if !d.IsDir() {
+			if strings.ToUpper(filepath.Ext(path)) == ".SRT" {
+				data, _ := os.ReadFile(path)
+				if string(bytes.Trim(data, "\x00")) == "" {
+					os.RemoveAll(path)
+					log.Printf("removed: %v", path)
+				}
+			}
+
+			if strings.ToUpper(d.Name()) == "RARBG_DO_NOT_MIRROR.EXE" ||
+				(strings.HasPrefix(d.Name(), ".") && strings.ToUpper(filepath.Ext(path)) == ".PARTS") {
 				os.RemoveAll(path)
 				log.Printf("removed: %v", path)
 			}
-		}
-		if !d.IsDir() && d.Name() == "RARBG_DO_NOT_MIRROR.exe" {
-			os.RemoveAll(path)
-			log.Printf("removed: %v", path)
 		}
 		return nil
 	})
