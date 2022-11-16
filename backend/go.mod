@@ -24,3 +24,5 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.2.0 // indirect
 )
+
+replace github.com/uber-go/atomic => github.com/uber-go/atomic v1.4.0
