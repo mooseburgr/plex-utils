@@ -64,6 +64,8 @@ const Home: NextPage = () => {
               hello there
             </h1>
             invite yourself to my plex server
+
+            <a rel="me" href="https://hachyderm.io/@mooseburger" className="d-none">hi mastodon</a>
           </div>
 
           <div className='col-sm-6 p-3' >
