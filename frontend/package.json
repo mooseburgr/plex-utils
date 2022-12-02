@@ -9,7 +9,7 @@
     "copyBuild": "rimraf ../docs/ && copy -R -Force ./out ../docs/"
   },
   "dependencies": {
-    "next": "^13.0.2",
+    "next": "^13.0.3",
     "react": "^18.2.0",
     "react-bootstrap": "2.6.0",
     "react-dom": "^18.2.0",
