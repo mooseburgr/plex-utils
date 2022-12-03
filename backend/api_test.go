@@ -10,7 +10,9 @@ import (
 )
 
 func Test_SendInvite(t *testing.T) {
-	t.Skip("local ad-hoc only")
+	if !isLocal() {
+		t.Skip()
+	}
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodPost, "/",
 		strings.NewReader(`{"email": "joh08227@umn.edu"}`))
@@ -34,7 +36,14 @@ func Test_GetIpInfo(t *testing.T) {
 }
 
 func Test_postToSlack(t *testing.T) {
-	t.Skip("local ad-hoc only")
+	if !isLocal() {
+		t.Skip()
+	}
 	os.Setenv("SLACK_WEBHOOK_URL", "https://hooks.slack.com/services/")
 	postToSlack("test@invite.com", "76.223.122.69")
+}
+
+func isLocal() bool {
+	host, _ := os.Hostname()
+	return host == "Kyles-MBP" || host == "Alakazam11"
 }

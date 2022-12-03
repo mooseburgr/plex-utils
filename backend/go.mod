@@ -20,6 +20,8 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/pelletier/go-toml/v2 v2.0.2 // indirect
+	github.com/pkg/errors v0.9.1
+	github.com/samber/lo v1.36.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect

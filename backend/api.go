@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jrudio/go-plex-client"
+	"github.com/pkg/errors"
 	"log"
 	"net/http"
 	"os"
@@ -38,24 +39,9 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	logParse(body, r)
+	logRequest(body, r)
 
-	plexCxn, err := initPlexCxn()
-	if err != nil {
-		http.Error(w, "ruh roh, can't connect to plex: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	cancelAnyPendingInvites(plexCxn, body.Email)
-
-	err = plexCxn.InviteFriend(plex.InviteFriendParams{
-		UsernameOrEmail: body.Email,
-		MachineID:       "d92d03d0c5f98de89a3b7699d744949bd9e78424",
-	})
-
-	excludePrivateLabel(plexCxn, body.Email)
-
-	// go ensureAllHaveDownloadAccess(plexCxn)
+	err = doThePlexStuff(body.Email)
 
 	if err != nil {
 		log.Printf("err from plex: %v", err)
@@ -70,6 +56,40 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func doThePlexStuff(email string) error {
+	plexClient, err := initPlexClient()
+	if err != nil {
+		return errors.Wrap(err, "failed to connect to plex")
+	}
+
+	err = cancelAnyPendingInvites(plexClient, email)
+	if err != nil {
+		return err
+	}
+
+	machineId, err := plexClient.GetMachineID()
+	if err != nil {
+		return err
+	}
+
+	err = plexClient.InviteFriend(plex.InviteFriendParams{
+		UsernameOrEmail: email,
+		MachineID:       machineId,
+	})
+	if err != nil {
+		return err
+	}
+
+	err = excludePrivateLabel(plexClient, email)
+	if err != nil {
+		return err
+	}
+
+	// go ensureAllHaveDownloadAccess(plexClient)
+
+	return nil
+}
+
 func postToSlack(email, ip string) {
 	ipInfo, err := GetIpInfo(ip)
 
@@ -81,10 +101,10 @@ func postToSlack(email, ip string) {
 	log.Printf("slack response: %+v, err: %v", resp, err)
 }
 
-func excludePrivateLabel(cxn *plex.Plex, email string) {
+func excludePrivateLabel(cxn *plex.Plex, email string) error {
 	friends, err := cxn.GetFriends()
 	if err != nil {
-		log.Printf("failed to get current friends: %v", err)
+		return errors.Wrap(err, "failed to get current friends")
 	}
 	for _, friend := range friends {
 		if strings.EqualFold(friend.Email, email) {
@@ -97,6 +117,7 @@ func excludePrivateLabel(cxn *plex.Plex, email string) {
 			log.Printf("updated friend %+v, success: %v, err: %v", friend, success, err)
 		}
 	}
+	return nil
 }
 
 func ensureAllHaveDownloadAccess(cxn *plex.Plex) {
@@ -115,19 +136,25 @@ func ensureAllHaveDownloadAccess(cxn *plex.Plex) {
 	}
 }
 
-func logParse(body RequestBody, r *http.Request) {
+func logRequest(body RequestBody, r *http.Request) {
 	log.Printf("parsed body: %+v", body)
 	info, err := GetIpInfo(GetIpAddress(r))
-	log.Printf("from IP: from IP: %+v (err: %v)", info, err)
+	log.Printf("from IP: %+v (err: %v)", info, err)
 	log.Printf("user-agent: %v", r.Header[UserAgent])
 }
 
 func GetIpAddress(r *http.Request) string {
-	return r.Header[XFF][0]
+	if len(r.Header[XFF]) > 0 {
+		return r.Header[XFF][0]
+	}
+	return ""
 }
 
-func cancelAnyPendingInvites(plexCxn *plex.Plex, email string) {
-	invites, _ := plexCxn.GetInvitedFriends()
+func cancelAnyPendingInvites(plexCxn *plex.Plex, email string) error {
+	invites, err := plexCxn.GetInvitedFriends()
+	if err != nil {
+		return errors.Wrap(err, "failed to get invites")
+	}
 	for _, invite := range invites {
 		if strings.EqualFold(invite.ID, email) || strings.EqualFold(invite.Email, email) {
 			success, err := plexCxn.RemoveInvitedFriend(invite.ID, invite.IsFriend, invite.IsServer, invite.IsHome)
@@ -138,6 +165,7 @@ func cancelAnyPendingInvites(plexCxn *plex.Plex, email string) {
 			}
 		}
 	}
+	return nil
 }
 
 type RequestBody struct {
@@ -191,7 +219,7 @@ func GetIpInfo(ip string) (IpResponse, error) {
 	return response, nil
 }
 
-func initPlexCxn() (*plex.Plex, error) {
+func initPlexClient() (*plex.Plex, error) {
 	return plex.New("https://plex.tv", GetPlexToken())
 }
 
