@@ -40,12 +40,14 @@ func main() {
 				return err
 			}
 			if d.IsDir() && d.Name() == "Subs" {
-				err = handleSubsDir(path)
-				if err == nil {
-					mu.Lock()
-					pathsToDelete = append(pathsToDelete, path)
-					mu.Unlock()
-				}
+				go func() {
+					err = handleSubsDir(path)
+					if err == nil {
+						mu.Lock()
+						pathsToDelete = append(pathsToDelete, path)
+						mu.Unlock()
+					}
+				}()
 			}
 			return err
 		})
