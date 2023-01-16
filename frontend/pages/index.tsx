@@ -19,7 +19,7 @@ const Home: NextPage = () => {
     event.preventDefault()
     setLoading(true)
 
-    await fetch('https://us-central1-plex-utils.cloudfunctions.net/send-invite', {
+    await fetch('https://send-plex-invite-d3zjrv6fua-uc.a.run.app', {
       method: 'POST',
       body: JSON.stringify({ email: email }),
     })
