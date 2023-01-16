@@ -18,5 +18,6 @@ steps:
   - --gen2
   - --allow-unauthenticated
   - --memory=128MB
+  - --set-secrets=PLEX_TOKEN=plex-token:latest,SLACK_WEBHOOK_URL=slack-webhook-url:latest
 options:
   logging: CLOUD_LOGGING_ONLY
