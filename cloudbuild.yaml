@@ -17,7 +17,6 @@ steps:
   - --entry-point=SendInvite
   - --gen2
   - --allow-unauthenticated
-  - --retry
   - --memory=128Mi
   - --set-secrets=PLEX_TOKEN=plex-token:latest,SLACK_WEBHOOK_URL=slack-webhook-url:latest
 options:
