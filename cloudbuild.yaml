@@ -9,12 +9,14 @@ steps:
   - gcloud
   - functions
   - deploy
-  - send-invite
+  - send-plex-invite
   - --region=us-central1
   - --source=backend
   - --trigger-http
-  - --runtime=go116
+  - --runtime=go119
   - --entry-point=SendInvite
   - --gen2
+  - --allow-unauthenticated
+  - --memory=128MB
 options:
   logging: CLOUD_LOGGING_ONLY
