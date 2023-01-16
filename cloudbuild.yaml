@@ -5,7 +5,7 @@ steps:
   args: ['go', 'test']
   dir: 'backend'
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  args:
+  args: # https://cloud.google.com/sdk/gcloud/reference/functions/deploy
   - gcloud
   - functions
   - deploy
@@ -17,6 +17,7 @@ steps:
   - --entry-point=SendInvite
   - --gen2
   - --allow-unauthenticated
+  - --retry
   - --memory=128Mi
   - --set-secrets=PLEX_TOKEN=plex-token:latest,SLACK_WEBHOOK_URL=slack-webhook-url:latest
 options:
