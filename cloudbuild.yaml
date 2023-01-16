@@ -15,5 +15,6 @@ steps:
   - --trigger-http
   - --runtime=go116
   - --entry-point=SendInvite
+  - --gen2
 options:
   logging: CLOUD_LOGGING_ONLY
