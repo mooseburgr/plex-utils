@@ -41,14 +41,14 @@ func main() {
 				return err
 			}
 			if d.IsDir() && d.Name() == "Subs" {
-				go func() {
-					err = handleSubsDir(path)
-					if err == nil {
-						mu.Lock()
-						pathsToDelete = append(pathsToDelete, path)
-						mu.Unlock()
-					}
-				}()
+				//go func() {
+				err = handleSubsDir(path)
+				if err == nil {
+					mu.Lock()
+					pathsToDelete = append(pathsToDelete, path)
+					mu.Unlock()
+				}
+				//}()
 			}
 			return err
 		})
@@ -136,7 +136,7 @@ func copySubs(subsPath, targetVideoFile string) error {
 			if err != nil {
 				return errors.Wrap(err, fmt.Sprintf("failed to get info on %v", sub))
 			}
-			log.Printf("copying (size %v) %v \n\tto %v", info.Size(), srcPath, destPath)
+			log.Printf("copying (size %v) %v \n    to %v \n\n", info.Size(), srcPath, destPath)
 			_, err = copyFile(srcPath, destPath)
 			if err != nil {
 				return errors.Wrap(err, fmt.Sprintf("failed to copy %v to %v", srcPath, destPath))
@@ -177,10 +177,7 @@ func areFilesEqual(src, dest string) bool {
 	if err != nil {
 		log.Fatalf("failed to read %v: %v", src, err)
 	}
-	destBytes, err := os.ReadFile(dest)
-	if err != nil {
-		log.Fatalf("failed to read %v: %v", dest, err)
-	}
+	destBytes, _ := os.ReadFile(dest)
 	return bytes.Equal(srcBytes, destBytes)
 }
 
