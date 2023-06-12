@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/GoogleCloudPlatform/functions-framework-go v1.7.1
 	github.com/gin-gonic/gin v1.9.1
-	github.com/go-co-op/gocron v1.23.0
+	github.com/go-co-op/gocron v1.28.3
 	github.com/jrudio/go-plex-client v0.0.0-20230508221844-834554e41d30
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.3
