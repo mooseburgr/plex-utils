@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"io/fs"
 	"log"
@@ -35,22 +36,25 @@ func main() {
 	var mu sync.Mutex
 	for _, root := range []string{tvRoot, moviesRoot} {
 		go cleanUpFiles(root)
-		filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
 			if d.IsDir() && d.Name() == "Subs" {
-				go func() {
-					err = handleSubsDir(path)
-					if err == nil {
-						mu.Lock()
-						pathsToDelete = append(pathsToDelete, path)
-						mu.Unlock()
-					}
-				}()
+				//go func() {
+				err = handleSubsDir(path)
+				if err == nil {
+					mu.Lock()
+					pathsToDelete = append(pathsToDelete, path)
+					mu.Unlock()
+				}
+				//}()
 			}
 			return err
 		})
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	//log.Printf("finna delete: \n%v", strings.Join(pathsToDelete, "\n"))
@@ -87,8 +91,7 @@ func handleMovieSubsDir(subsRoot string) error {
 			targetVideoFile = strings.TrimSuffix(file.Name(), mkvExt)
 		}
 	}
-	copySubs(subsRoot, targetVideoFile)
-	return nil
+	return copySubs(subsRoot, targetVideoFile)
 }
 
 func handleTvSubsDir(subsRoot string) error {
@@ -98,7 +101,7 @@ func handleTvSubsDir(subsRoot string) error {
 			return err
 		}
 		if d.IsDir() && d.Name() != "Subs" {
-			copySubs(path, d.Name())
+			return copySubs(path, d.Name())
 		}
 		return nil
 	})
@@ -108,29 +111,40 @@ func getTargetDir(path string) string {
 	return strings.Split(path+string(os.PathSeparator), string(os.PathSeparator)+"Subs"+string(os.PathSeparator))[0]
 }
 
-func copySubs(subsPath, targetVideoFile string) {
+func copySubs(subsPath, targetVideoFile string) error {
 	if targetVideoFile == "" {
 		log.Printf("no target video file for path: %v", subsPath)
-		return
+		return nil
 	}
 
 	// log.Printf("handling subs dir: %s", subsPath)
-	subtitles := getSortedEnglishSubs(subsPath)
+	subtitles, err := getSortedEnglishSubs(subsPath)
+	if err != nil {
+		return err
+	}
+
 	for i, sub := range subtitles {
-		oldPath := filepath.Join(subsPath, sub.Name())
-		newPath := filepath.Join(getTargetDir(subsPath),
+		srcPath := filepath.Join(subsPath, sub.Name())
+		destPath := filepath.Join(getTargetDir(subsPath),
 			targetVideoFile+determineSubtitleType(sub.Name(), i, subtitles),
 		)
 
-		if areFilesEqual(oldPath, newPath) {
-			//log.Printf("files are equal, not copying: %v", oldPath)
+		if areFilesEqual(srcPath, destPath) {
+			//log.Printf("files are equal, not copying: %v", srcPath)
 		} else {
-			info, _ := sub.Info()
-			log.Printf("copying (size %v) %v \n\tto %v", info.Size(), oldPath, newPath)
-			copyFile(oldPath, newPath)
+			info, err := sub.Info()
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("failed to get info on %v", sub))
+			}
+			log.Printf("copying (size %v) %v \n    to %v \n\n", info.Size(), srcPath, destPath)
+			_, err = copyFile(srcPath, destPath)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("failed to copy %v to %v", srcPath, destPath))
+			}
 		}
 	}
 	// log.Printf("finished %v \n\n", subsPath)
+	return nil
 }
 
 func copyFile(src string, dest string) (int64, error) {
@@ -159,14 +173,21 @@ func copyFile(src string, dest string) (int64, error) {
 }
 
 func areFilesEqual(src, dest string) bool {
-	srcBytes, _ := os.ReadFile(src)
+	srcBytes, err := os.ReadFile(src)
+	if err != nil {
+		log.Fatalf("failed to read %v: %v", src, err)
+	}
 	destBytes, _ := os.ReadFile(dest)
 	return bytes.Equal(srcBytes, destBytes)
 }
 
-func getSortedEnglishSubs(path string) []os.DirEntry {
+func getSortedEnglishSubs(path string) ([]os.DirEntry, error) {
 	var englishSubs []os.DirEntry
-	subtitles, _ := os.ReadDir(path)
+	subtitles, err := os.ReadDir(path)
+	if err != nil {
+		return englishSubs, err
+	}
+
 	for _, sub := range subtitles {
 		if strings.Contains(sub.Name(), "Eng") {
 			englishSubs = append(englishSubs, sub)
@@ -174,11 +195,17 @@ func getSortedEnglishSubs(path string) []os.DirEntry {
 	}
 	// sort by size desc
 	sort.Slice(englishSubs, func(i, j int) bool {
-		iInfo, _ := englishSubs[i].Info()
-		jInfo, _ := englishSubs[j].Info()
+		iInfo, err := englishSubs[i].Info()
+		if err != nil {
+			log.Fatalf("failed to get info on %v: %v", englishSubs[i], err)
+		}
+		jInfo, err := englishSubs[j].Info()
+		if err != nil {
+			log.Fatalf("failed to get info on %v: %v", englishSubs[j], err)
+		}
 		return iInfo.Size() > jInfo.Size()
 	})
-	return englishSubs
+	return englishSubs, nil
 }
 
 func determineSubtitleType(filename string, sortIndex int, files []os.DirEntry) string {
@@ -187,8 +214,15 @@ func determineSubtitleType(filename string, sortIndex int, files []os.DirEntry) 
 		return subtitleTypeMap[1] + filepath.Ext(filename)
 	}
 	if len(files) == 2 {
-		bigFile, _ := files[0].Info()
-		smallFile, _ := files[1].Info()
+		bigFile, err := files[0].Info()
+		if err != nil {
+			log.Fatalf("failed to get info on %v: %v", files[0], err)
+		}
+		smallFile, err := files[1].Info()
+		if err != nil {
+			log.Fatalf("failed to get info on %v: %v", files[1], err)
+		}
+
 		// small file is significantly smaller, assume we have .en and .en.forced
 		if float64(smallFile.Size())/float64(bigFile.Size()) < .3 {
 			return subtitleTypeMap[sortIndex+1] + filepath.Ext(filename)
@@ -199,20 +233,29 @@ func determineSubtitleType(filename string, sortIndex int, files []os.DirEntry) 
 }
 
 // del "\\?\G:\TV Shows\Marvels Agents of S.H.I.E.L.D.\"
-func cleanUpFiles(root string) {
-	filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+func cleanUpFiles(root string) error {
+	return filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if !d.IsDir() {
 			if strings.ToUpper(filepath.Ext(path)) == ".SRT" {
-				data, _ := os.ReadFile(path)
+				data, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
 				if string(bytes.Trim(data, "\x00")) == "" {
-					os.RemoveAll(path)
+					err := os.RemoveAll(path)
+					if err != nil {
+						return err
+					}
 					log.Printf("removed: %v", path)
 				}
 			}
 
 			if strings.ToUpper(d.Name()) == "RARBG_DO_NOT_MIRROR.EXE" ||
 				(strings.HasPrefix(d.Name(), ".") && strings.ToUpper(filepath.Ext(path)) == ".PARTS") {
-				os.RemoveAll(path)
+				err := os.RemoveAll(path)
+				if err != nil {
+					return err
+				}
 				log.Printf("removed: %v", path)
 			}
 		}
