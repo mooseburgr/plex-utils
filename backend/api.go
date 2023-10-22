@@ -1,11 +1,12 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/jrudio/go-plex-client"
 	"github.com/pkg/errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -17,21 +18,24 @@ const (
 	XFF          = "X-Forwarded-For"
 	AppEngUserIp = "Appengine-User-Ip"
 	IpStackKey   = "dba9b8dc10f06971ee169e857c374d07" // free key, wgaf
+	errKey       = "err"
 )
+
+var logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 var ipInfoMap = make(map[string]IpResponse)
 
 func SendInvite(w http.ResponseWriter, r *http.Request) {
+	// CORS is COOL
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	// handle OPTIONS request
 	if r.Method == http.MethodOptions {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		w.Header().Set("Access-Control-Max-Age", "3600")
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	var body RequestBody
 	err := json.NewDecoder(r.Body).Decode(&body)
@@ -44,9 +48,10 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 	err = doThePlexStuff(body.Email)
 
 	if err != nil {
-		log.Printf("err from plex: %v", err)
+		logger.ErrorContext(context.Background(), "err from plex",
+			errKey, err)
 		if strings.HasPrefix(err.Error(), strconv.Itoa(http.StatusUnprocessableEntity)) {
-			// 422 = invite is already pending or user exists
+			// 422 == invite is already pending or user exists
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		} else {
 			http.Error(w, "lol idk something blew up: "+err.Error(), http.StatusBadRequest)
@@ -98,7 +103,9 @@ func postToSlack(email, ip string) {
 
 	resp, err := http.Post(os.Getenv("SLACK_WEBHOOK_URL"), "application/json",
 		strings.NewReader(fmt.Sprintf(`{"text":"%s"}`, msg)))
-	log.Printf("slack response: %+v, err: %v", resp, err)
+	logger.InfoContext(context.Background(), "slack response",
+		"resp", resp,
+		errKey, err)
 }
 
 func excludePrivateLabel(cxn *plex.Plex, email string) error {
@@ -114,7 +121,10 @@ func excludePrivateLabel(cxn *plex.Plex, email string) error {
 				FilterPhotos:     "label!=private",
 				FilterMovies:     "label!=private",
 			})
-			log.Printf("updated friend %+v, success: %v, err: %v", friend, success, err)
+			logger.InfoContext(context.Background(), "updated friend access",
+				"friend", friend,
+				"success", success,
+				errKey, err)
 		}
 	}
 	return nil
@@ -123,7 +133,8 @@ func excludePrivateLabel(cxn *plex.Plex, email string) error {
 func ensureAllHaveDownloadAccess(cxn *plex.Plex) {
 	friends, err := cxn.GetFriends()
 	if err != nil {
-		log.Printf("failed to get current friends: %v", err)
+		logger.ErrorContext(context.Background(), "failed to get current friends",
+			errKey, err)
 	}
 	for _, friend := range friends {
 		success, err := cxn.UpdateFriendAccess(fmt.Sprint(friend.ID), plex.UpdateFriendParams{
@@ -131,16 +142,20 @@ func ensureAllHaveDownloadAccess(cxn *plex.Plex) {
 			AllowChannels: "1",
 		})
 		if !success || err != nil {
-			log.Printf("failed to allow downloads for: %+v", friend)
+			logger.ErrorContext(context.Background(), "failed to allow downloads for",
+				"friend", friend,
+				errKey, err)
 		}
 	}
 }
 
 func logRequest(body RequestBody, r *http.Request) {
-	log.Printf("parsed body: %+v", body)
 	info, err := GetIpInfo(GetIpAddress(r))
-	log.Printf("from IP: %+v (err: %v)", info, err)
-	log.Printf("user-agent: %v", r.Header[UserAgent])
+	logger.InfoContext(context.Background(), "parsed request",
+		"body", body,
+		UserAgent, r.Header[UserAgent],
+		"ipInfo", info,
+		errKey, err)
 }
 
 func GetIpAddress(r *http.Request) string {
@@ -159,9 +174,12 @@ func cancelAnyPendingInvites(plexCxn *plex.Plex, email string) error {
 		if strings.EqualFold(invite.ID, email) || strings.EqualFold(invite.Email, email) {
 			success, err := plexCxn.RemoveInvitedFriend(invite.ID, invite.IsFriend, invite.IsServer, invite.IsHome)
 			if !success || err != nil {
-				log.Printf("failed to cancel pending invite %+v, err: %v", invite, err)
+				logger.ErrorContext(context.Background(), "failed to cancel pending invite",
+					"invite", invite,
+					errKey, err)
 			} else {
-				log.Printf("successfully canceled invite %+v", invite)
+				logger.InfoContext(context.Background(), "successfully canceled invite",
+					"invite", invite)
 			}
 		}
 	}
@@ -209,11 +227,13 @@ func GetIpInfo(ip string) (IpResponse, error) {
 	var response IpResponse
 	resp, err := http.Get(fmt.Sprintf("http://api.ipstack.com/%s?access_key=%s", ip, IpStackKey))
 	if err != nil {
-		log.Printf("error from IP API: %v", err)
+		logger.ErrorContext(context.Background(), "error from IP API",
+			errKey, err)
 	}
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
-		log.Printf("error decoding: %v", err)
+		logger.ErrorContext(context.Background(), "failed to decode JSON",
+			errKey, err)
 	}
 	ipInfoMap[ip] = response
 	return response, nil
