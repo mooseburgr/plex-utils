@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/jrudio/go-plex-client"
 	"github.com/pkg/errors"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -103,9 +104,13 @@ func postToSlack(email, ip string) {
 
 	resp, err := http.Post(os.Getenv("SLACK_WEBHOOK_URL"), "application/json",
 		strings.NewReader(fmt.Sprintf(`{"text":"%s"}`, msg)))
+	respBodyBytes, _ := io.ReadAll(resp.Body)
 
 	logger.InfoContext(context.Background(), "slack response",
-		"resp", fmt.Sprintf("%+v", resp),
+		"status", resp.Status,
+		"respBody", string(respBodyBytes),
+		"headers", resp.Header,
+		"protocol", resp.Proto,
 		errKey, err)
 }
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -39,11 +40,11 @@ func Test_postToSlack(t *testing.T) {
 	if !isLocal() {
 		t.Skip()
 	}
-	os.Setenv("SLACK_WEBHOOK_URL", "https://hooks.slack.com/services/")
+	os.Setenv("SLACK_WEBHOOK_URL", "https://hooks.slack.com/services/SUPER/SECRET/URL")
 	postToSlack("test@invite.com", "76.223.122.69")
 }
 
 func isLocal() bool {
 	host, _ := os.Hostname()
-	return host == "Kyles-MBP" || host == "Alakazam11"
+	return slices.Contains([]string{"Kyles-MBP", "Kyles-MacBook-Pro.local", "Alakazam11"}, host)
 }
