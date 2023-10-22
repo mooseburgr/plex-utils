@@ -103,8 +103,9 @@ func postToSlack(email, ip string) {
 
 	resp, err := http.Post(os.Getenv("SLACK_WEBHOOK_URL"), "application/json",
 		strings.NewReader(fmt.Sprintf(`{"text":"%s"}`, msg)))
+
 	logger.InfoContext(context.Background(), "slack response",
-		"resp", resp,
+		"resp", fmt.Sprintf("%+v", resp),
 		errKey, err)
 }
 
