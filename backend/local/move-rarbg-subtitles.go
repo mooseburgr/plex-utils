@@ -189,7 +189,7 @@ func getSortedEnglishSubs(path string) ([]os.DirEntry, error) {
 	}
 
 	for _, sub := range subtitles {
-		if strings.Contains(sub.Name(), "Eng") {
+		if strings.Contains(strings.ToLower(sub.Name()), "eng") {
 			englishSubs = append(englishSubs, sub)
 		}
 	}
