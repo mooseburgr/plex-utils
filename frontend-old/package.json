@@ -1,0 +1,25 @@
+{
+  "name": "plex-utils-frontend",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && next export",
+    "start": "next start",
+    "lint": "next lint",
+    "copyBuild": "rimraf ../docs/ && copy -R -Force ./out ../docs/"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^1.0.0",
+    "next": "^13.3.0",
+    "react": "^18.2.0",
+    "react-bootstrap": "2.9.1",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.8.9",
+    "@types/react": "18.2.33",
+    "eslint": "8.52.0",
+    "eslint-config-next": "^13.0.0",
+    "typescript": "5.2.2"
+  }
+}
