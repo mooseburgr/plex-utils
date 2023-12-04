@@ -16,7 +16,7 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@types/node": "20.10.0",
+    "@types/node": "20.10.3",
     "@types/react": "18.2.39",
     "eslint": "8.54.0",
     "eslint-config-next": "^13.0.0",
