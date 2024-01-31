@@ -73,9 +73,15 @@ func doThePlexStuff(email string) error {
 		return err
 	}
 
-	machineId, err := plexClient.GetMachineID()
+	var machineId string
+	serverInfo, err := plexClient.GetServersInfo()
 	if err != nil {
 		return err
+	}
+	for _, server := range serverInfo.Server {
+		if "Alakazam11" == server.Name && server.AccessToken == plexClient.Token {
+			machineId = server.MachineIdentifier
+		}
 	}
 
 	err = plexClient.InviteFriend(plex.InviteFriendParams{
