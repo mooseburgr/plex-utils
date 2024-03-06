@@ -16,7 +16,7 @@ require (
 	cloud.google.com/go/functions v1.15.1 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
-	github.com/cloudevents/sdk-go/v2 v2.14.0 // indirect
+	github.com/cloudevents/sdk-go/v2 v2.15.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
