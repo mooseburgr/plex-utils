@@ -3,7 +3,7 @@ module github.com/mooseburgr/plex-utils
 go 1.21
 
 require (
-	github.com/GoogleCloudPlatform/functions-framework-go v1.8.0
+	github.com/GoogleCloudPlatform/functions-framework-go v1.8.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-co-op/gocron v1.37.0
 	github.com/jrudio/go-plex-client v0.0.0-20230508221844-834554e41d30
@@ -13,7 +13,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/functions v1.15.1 // indirect
+	cloud.google.com/go/functions v1.15.3 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/cloudevents/sdk-go/v2 v2.14.0 // indirect
