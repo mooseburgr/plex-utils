@@ -17,6 +17,7 @@ import (
 const (
 	UserAgent    = "User-Agent"
 	XFF          = "X-Forwarded-For"
+	Referer      = "Referer"
 	AppEngUserIp = "Appengine-User-Ip"
 	IpStackKey   = "dba9b8dc10f06971ee169e857c374d07" // free key, wgaf
 	errKey       = "err"
@@ -166,6 +167,7 @@ func logRequest(body RequestBody, r *http.Request) {
 	logger.InfoContext(context.Background(), "parsed request",
 		"body", body,
 		UserAgent, r.Header[UserAgent],
+		Referer, r.Header[Referer],
 		"ipInfo", info,
 		errKey, err)
 }
