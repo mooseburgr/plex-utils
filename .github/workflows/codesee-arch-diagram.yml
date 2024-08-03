@@ -11,8 +11,10 @@ name: CodeSee
 
 permissions: read-all
 
+
 jobs:
   codesee:
+    if: false # disabled for now
     runs-on: ubuntu-latest
     continue-on-error: true
     name: Analyze the repo with CodeSee
