@@ -250,8 +250,8 @@ func cleanUpFiles(root string) error {
 				}
 			}
 
-			if strings.ToUpper(d.Name()) == "RARBG_DO_NOT_MIRROR.EXE" ||
-				(strings.HasPrefix(d.Name(), ".") && strings.ToUpper(filepath.Ext(path)) == ".PARTS") {
+			if strings.ToUpper(d.Name()) == "RARBG_DO_NOT_MIRROR.EXE" {
+				//|| (strings.HasPrefix(d.Name(), ".") && strings.ToUpper(filepath.Ext(path)) == ".PARTS")
 				err := os.RemoveAll(path)
 				if err != nil {
 					return err
