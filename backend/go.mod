@@ -4,7 +4,7 @@ go 1.23.4
 
 require (
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.1
-	github.com/gin-gonic/gin v1.10.0
+	github.com/gin-gonic/gin v1.10.1
 	github.com/go-co-op/gocron v1.37.0
 	github.com/jrudio/go-plex-client v0.0.0-20230508221844-834554e41d30
 	github.com/pkg/errors v0.9.1
