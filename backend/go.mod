@@ -6,6 +6,7 @@ require (
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-co-op/gocron v1.37.0
+	github.com/go-co-op/gocron/v2 v2.16.3
 	github.com/jrudio/go-plex-client v0.0.0-20230508221844-834554e41d30
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.10.0
@@ -42,10 +43,10 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.12.0 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
-	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/crypto v0.40.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
 	google.golang.org/protobuf v1.36.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
