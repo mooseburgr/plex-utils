@@ -13,7 +13,7 @@ steps:
   - --region=us-central1
   - --source=backend
   - --trigger-http
-  - --runtime=go123
+  - --runtime=go125
   - --entry-point=SendInvite
   - --gen2
   - --allow-unauthenticated
