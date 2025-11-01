@@ -4,14 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jrudio/go-plex-client"
-	"github.com/pkg/errors"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/jrudio/go-plex-client"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -22,6 +24,8 @@ const (
 	IpStackKey   = "dba9b8dc10f06971ee169e857c374d07" // free key, wgaf
 	errKey       = "err"
 )
+
+var allowedStates = []string{"MN", "WI", "UT"}
 
 var logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
@@ -46,6 +50,12 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logRequest(body, r)
+
+	ipInfo, _ := GetIpInfo(GetIpAddress(r))
+	if !slices.Contains(allowedStates, ipInfo.RegionCode) {
+		http.Error(w, "sorry, too far", http.StatusBadRequest)
+		return
+	}
 
 	err = doThePlexStuff(body.Email)
 
