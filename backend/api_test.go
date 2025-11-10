@@ -46,5 +46,5 @@ func Test_postToSlack(t *testing.T) {
 
 func isLocal() bool {
 	host, _ := os.Hostname()
-	return slices.Contains([]string{"Kyles-MBP", "Kyles-MacBook-Pro.local", "Alakazam11"}, host)
+	return slices.Contains([]string{"Kyles-MBP", "Kyles-MacBook-Pro.local", "Alakazam11", "MacBookPro"}, host)
 }

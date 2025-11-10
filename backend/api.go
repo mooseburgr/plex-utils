@@ -74,7 +74,7 @@ func SendInvite(w http.ResponseWriter, r *http.Request) {
 }
 
 func doThePlexStuff(email string) error {
-	plexClient, err := initPlexClient()
+	plexClient, err := InitPlexClient()
 	if err != nil {
 		return errors.Wrap(err, "failed to connect to plex")
 	}
@@ -90,8 +90,9 @@ func doThePlexStuff(email string) error {
 		return err
 	}
 	for _, server := range serverInfo.Server {
-		if "Alakazam11" == server.Name && server.AccessToken == plexClient.Token {
+		if "Alakazebian" == server.Name && server.AccessToken == plexClient.Token {
 			machineId = server.MachineIdentifier
+			break
 		}
 	}
 
@@ -263,7 +264,7 @@ func GetIpInfo(ip string) (IpResponse, error) {
 	return response, nil
 }
 
-func initPlexClient() (*plex.Plex, error) {
+func InitPlexClient() (*plex.Plex, error) {
 	return plex.New("https://plex.tv", GetPlexToken())
 }
 
