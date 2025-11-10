@@ -25,7 +25,7 @@ const (
 	errKey       = "err"
 )
 
-var allowedStates = []string{"MN", "WI", "UT"}
+var allowedStates = []string{"MN", "WI", "IL", "UT"}
 
 var logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
