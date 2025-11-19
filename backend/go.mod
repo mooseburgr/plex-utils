@@ -6,6 +6,7 @@ require (
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.2
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-co-op/gocron v1.37.0
+	github.com/go-co-op/gocron/v2 v2.18.0
 	github.com/jrudio/go-plex-client v0.0.0-20250127195314-943dc7a39f7c
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.11.1
