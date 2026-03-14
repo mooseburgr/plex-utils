@@ -9,7 +9,7 @@ require (
 	github.com/jrudio/go-plex-client v0.0.0-20250127195314-943dc7a39f7c
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.11.1
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 )
 
 require (
