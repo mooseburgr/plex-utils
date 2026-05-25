@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"io/fs"
 	"log"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // RARBG's 3/4/5_English.srt mapping doesn't appear to be consistent,
@@ -24,8 +25,8 @@ var subtitleTypeMap = map[int]string{
 }
 
 const (
-	tvRoot     = "G:\\TV Shows"
-	moviesRoot = "G:\\Movies"
+	tvRoot     = "/mnt/media/easystore-1/TV Shows"
+	moviesRoot = "/mnt/media/easystore-1/Movies"
 	mp4Ext     = ".mp4"
 	mkvExt     = ".mkv"
 )
